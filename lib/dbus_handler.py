@@ -1,7 +1,7 @@
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from dispatch import EventQueue
-import dispatch
+import events
 
 class DBusHandler:
     __single = None
@@ -27,6 +27,9 @@ class DBusHandler:
 
         self.ev_queue = EventQueue.instance()
 
+        # Assure the UDisks service runs
+        self.get_device("/org/freedesktop/UDisks")
+
     @staticmethod
     def instance():
         return DBusHandler.__single if DBusHandler.__single else DBusHandler()
@@ -36,10 +39,10 @@ class DBusHandler:
         path = args[0]
         if member == "DeviceAdded" and self.is_drive(path):
             port = self.get_port(path)
-            self.ev_queue.put(dispatch.DriveAdded(path, port))
+            self.ev_queue.put(events.DriveAdded(path, port))
         if member == "DeviceAdded" and self.is_partition(path):
-            self.ev_queue.put(dispatch.PartitionAdded(path, self.get_parent(path)))
-        if member == "DeviceRemoved": self.ev_queue.put(dispatch.DriveRemoved(path))
+            self.ev_queue.put(events.PartitionAdded(path, self.get_parent(path)))
+        if member == "DeviceRemoved": self.ev_queue.put(events.DriveRemoved(path))
 
 
     def get_device(self, path):
@@ -74,6 +77,8 @@ class DBusHandler:
 
     def mount(self, path):
         device = self.get_device(path)
+        if self.get_prop(device, "DeviceIsMounted"):
+            return self.get_prop(device, "DeviceMountPaths")[0]
         return device.FilesystemMount(
                                       "", [],
                                       dbus_interface = 'org.freedesktop.UDisks.Device'

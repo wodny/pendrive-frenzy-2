@@ -5,53 +5,9 @@ from threading import Thread
 import sys
 
 from dispatch import EventQueue
-import dispatch
+import events
 
-class PendriveStore:
-    DRIVE_NEW = 0
-    DRIVE_PART_SELECTED = 1
-    DRIVE_PART_WRITING = 2
-    DRIVE_PART_DONE = 3
-    DRIVE_ERROR = 4
-
-    COLOR_NEW = "White"
-    COLOR_DONE = "LightGreen"
-    COLOR_INPROGRESS = "Gold"
-    COLOR_ERROR = "Red"
-
-    code_to_color = {
-                     DRIVE_NEW: COLOR_NEW,
-                     DRIVE_PART_SELECTED: COLOR_INPROGRESS,
-                     DRIVE_PART_WRITING: COLOR_INPROGRESS,
-                     DRIVE_PART_DONE: COLOR_INPROGRESS,
-                     DRIVE_ERROR: COLOR_ERROR
-                    }
-
-    COLUMN_STATUSTEXT = 2
-    COLUMN_STATUSCODE = 3
-    COLUMN_COLOR = 4
-
-
-    def __init__(self):
-        self.store = gtk.ListStore(str, str, str, int, str)
-
-    def find(self, path):
-        iter = self.store.get_iter_first()
-        while iter:
-            if self.store.get(iter, 0)[0] == path: return iter
-            iter = self.store.iter_next(iter)
-
-    def get_status(self, iter):
-        return self.store.get(iter, PendriveStore.COLUMN_STATUSCODE, PendriveStore.COLUMN_STATUSTEXT)
-
-    def set_status(self, iter, code, text):
-        color = PendriveStore.code_to_color[code]
-        self.store.set(
-                       iter,
-                       PendriveStore.COLUMN_STATUSCODE, code,
-                       PendriveStore.COLUMN_STATUSTEXT, text,
-                       PendriveStore.COLUMN_COLOR, color
-                      )
+from pendrivestore import PendriveStore
 
 class PendriveListWrapper:
     def __init__(self, pendrive_view):
@@ -91,20 +47,35 @@ class GUI(Thread):
         self.window = self.builder.get_object("main_window")
         self.pendrive_list = PendriveListWrapper( self.builder.get_object("pendrive_list") )
         self.writing_enabled = self.builder.get_object("writing_enabled")
+        self.source_dir = self.builder.get_object("source_dir")
 
         self.builder.connect_signals(self)
         self.window.show()
 
     def run(self):
         gtk.main()
-        EventQueue.instance().put(dispatch.Quit())
+        EventQueue.instance().put(events.Quit())
 
     @staticmethod
     def instance():
         return GUI.__single if GUI.__single else GUI()
 
-    def on_main_window_destroy(widget, data = None):
+    def on_main_window_destroy(self, widget, data = None):
         gtk.main_quit()
+
+    def on_select_source_dir_pressed(self, widget, data = None):
+        chooser = gtk.FileChooserDialog(
+                                        action = gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                                                   gtk.STOCK_OPEN, gtk.RESPONSE_OK)
+                                       )
+        chooser.set_default_response(gtk.RESPONSE_OK)
+        response = chooser.run()
+        if response == gtk.RESPONSE_OK:
+            source = chooser.get_filename()
+            if not source.endswith('/'): source += '/'
+            self.source_dir.set_text(source)
+        chooser.destroy()
 
     def writing_active(self):
         return self.writing_enabled.get_active()
@@ -112,8 +83,14 @@ class GUI(Thread):
     def status_update(self, pendrive, status_code, status_text):
         gobject.idle_add(self.__status_update_idle, pendrive, status_code, status_text)
 
-    def __status_update_idle(self, pendrive, status):
-        print("{0}: {1} {2}".format(pendrive, status_code, status_text))
+    def __status_update_idle(self, pendrive, status_code, status_text):
+        pendrive = self.pendrive_list.pendrive_store.find(pendrive)
+        if pendrive is None: return
+        self.pendrive_list.pendrive_store.set_status(
+                                                     pendrive,
+                                                     status_code,
+                                                     status_text
+                                                    )
 
     def pendrive_add(self, pendrive, port):
         gobject.idle_add(self.__pendrive_add_idle, pendrive, port)
@@ -142,7 +119,8 @@ class GUI(Thread):
         if statuscode != PendriveStore.DRIVE_NEW: return
         self.pendrive_list.pendrive_store.set_status(
                                                      parent_iter,
-                                                     PendriveStore.DRIVE_PART_SELECTED,
-                                                     "Zapis partycji..."
+                                                     PendriveStore.DRIVE_SELECTED,
+                                                     "Zapis danych..."
                                                     )
-        EventQueue.instance().put(dispatch.WriteData(part))
+        source_dir = self.source_dir.get_text()
+        EventQueue.instance().put(events.WriteData(part, source_dir))
