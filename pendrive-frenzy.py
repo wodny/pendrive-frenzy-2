@@ -11,6 +11,8 @@ from dbus.mainloop.glib import DBusGMainLoop
 gobject.threads_init()
 
 from lib.gui import GUI
+from lib.dispatch import EventQueue, Executor
+
 
 def handler(*args, **kwargs):
     print("Handler activated.")
@@ -22,7 +24,6 @@ def handler(*args, **kwargs):
 def main():
     DBusGMainLoop(set_as_default=True)
 
-    #session_bus = dbus.SessionBus()
     bus = dbus.SystemBus()
     bus.add_signal_receiver(handler,
                             dbus_interface="org.freedesktop.UDisks",
@@ -34,9 +35,12 @@ def main():
                             path_keyword="path"
                            )
 
+    executor = Executor()
     gui = GUI.instance()
+    gui.start()
+    executor.start()
+    executor.join()
 
-    gtk.main()
 
 if __name__ == '__main__':
     main()
