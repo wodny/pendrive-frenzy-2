@@ -8,54 +8,51 @@ from threading import Thread, Timer
 class Event:
     pass
 
-class ProgressUpdate(Event):
-    def __init__(self, gui, progress, total_progress, status = None):
-        self.gui = gui
-        self.progress = progress
-        self.total_progress = total_progress
-        self.status = status
-
-    def handle(self, executor):
-        self.gui.progress_update(self.progress, self.total_progress, self.status)
-
 class StatusUpdate(Event):
-    def __init__(self, gui, status):
-        self.gui = gui
-        self.status = status
+    def __init__(self, pendrive, status_code, status_text):
+        self.pendrive = pendrive
+        self.status_code = self.status_code
+        self.status_text = status_text
 
     def handle(self, executor):
-        self.gui.status_update(self.status)
+        executor.gui.status_update(self.pendrive, self.status_code, self.status_text)
 
-class MainStatusUpdate(Event):
-    def __init__(self, gui, status):
-        self.gui = gui
-        self.status = status
-
-    def handle(self, executor):
-        self.gui.mainstatus_update(self.status)
-
-class ErrorsUpdate(Event):
-    def __init__(self, gui, errors):
-        self.gui = gui
-        self.errors = errors
+class DriveAdded(Event):
+    def __init__(self, path, port):
+        self.path = path
+        self.port = port
 
     def handle(self, executor):
-        self.gui.errors_update(self.errors)
+        print("New drive: {0}".format(self.path))
+        executor.gui.pendrive_add(self.path, self.port)
 
-class ExpandErrors(Event):
-    def __init__(self, gui, expand):
-        self.gui = gui
-        self.expand = expand
-
-    def handle(self, executor):
-        self.gui.expand_errors(self.expand)
-
-class SetExitCode(Event):
-    def __init__(self, exitcode):
-        self.exitcode = exitcode
+class PartitionAdded(Event):
+    def __init__(self, path, parent):
+        self.path = path
+        self.parent = parent
 
     def handle(self, executor):
-        executor.exitcode = self.exitcode
+        print("New partition: {0}".format(self.path))
+        executor.gui.partition_add(self.path, self.parent)
+
+class DriveRemoved(Event):
+    def __init__(self, path):
+        self.path = path
+
+    def handle(self, executor):
+        print("Drive removed: {0}".format(self.path))
+        executor.gui.pendrive_remove(self.path)
+
+
+class WriteData(Event):
+    def __init__(self, path):
+        self.path = path
+
+    def handle(self, executor):
+        import time
+        executor.dbus.mount(self.path)
+        time.sleep(5)
+        executor.dbus.unmount(self.path)
 
 class Quit(Event):
     def __init__(self):
@@ -63,31 +60,6 @@ class Quit(Event):
 
     def handle(self, executor):
         executor.execute = False
-
-class MakeSurprise(Event):
-    def __init__(self, delay):
-        self.delay = delay
-
-    def handle(self, executor):
-        if(self.delay >= 0):
-            executor.surprise = Surprise(self.delay)
-
-
-############
-# Surprise #
-############
-
-class Surprise:
-    def __init__(self, delay):
-        self.timer = Timer(delay, self.wakeup)
-        self.timer.start()
-
-    def wakeup(self):
-        EventQueue.instance().put(Quit())
-
-    def cancel(self):
-        self.timer.cancel()
-        self.timer.join() 
 
 
 ####################
@@ -114,14 +86,11 @@ class Executor(Thread):
         Thread.__init__(self)
         self.daemon = True
         self.queue = EventQueue.instance()
-        self.exitcode = 128
         self.execute = True
-        self.surprise = None
+        self.gui = None
+        self.dbus = None
 
     def run(self):
         while self.execute:
             order = self.queue.get()
             order.handle(self)
-
-        if self.surprise:
-            self.surprise.cancel()

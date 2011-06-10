@@ -60,10 +60,9 @@
         </child>
         <child>
           <object class="GtkTreeView" id="pendrive_list">
-            <property name="width_request">300</property>
+            <property name="width_request">500</property>
             <property name="height_request">300</property>
             <property name="visible">True</property>
-            <property name="can_focus">True</property>
           </object>
           <packing>
             <property name="position">1</property>
