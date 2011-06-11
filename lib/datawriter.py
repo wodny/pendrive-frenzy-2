@@ -43,7 +43,7 @@ class DataWriter(Thread):
                                      ))
 
         try:
-            subprocess.check_call(["rsync", "-r", self.source, mountpath])
+            subprocess.check_call(["rsync", "-rI", "--delete", "--", self.source, mountpath])
         except subprocess.CalledProcessError as e:
             success = False
             print(e)
