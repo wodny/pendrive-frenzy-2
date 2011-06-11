@@ -30,12 +30,12 @@ class PartitionAdded(Event):
         print("New partition: {0}".format(self.path))
         executor.gui.partition_add(self.path, self.parent)
 
-class DriveRemoved(Event):
+class DeviceRemoved(Event):
     def __init__(self, path):
         self.path = path
 
     def handle(self, executor):
-        print("Drive removed: {0}".format(self.path))
+        print("Device removed: {0}".format(self.path))
         executor.gui.pendrive_remove(self.path)
 
 

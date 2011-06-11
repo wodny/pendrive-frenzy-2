@@ -42,7 +42,7 @@ class DBusHandler:
             self.ev_queue.put(events.DriveAdded(path, port))
         if member == "DeviceAdded" and self.is_partition(path):
             self.ev_queue.put(events.PartitionAdded(path, self.get_parent(path)))
-        if member == "DeviceRemoved": self.ev_queue.put(events.DriveRemoved(path))
+        if member == "DeviceRemoved": self.ev_queue.put(events.DeviceRemoved(path))
 
 
     def get_device(self, path):
