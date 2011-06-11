@@ -7,6 +7,7 @@ from pendrivestore import PendriveStore
 from dbus_handler import DBusHandler
 import events
 import time
+import dbus
 
 class DataWriter(Thread):
     def __init__(self, path, source):
@@ -17,8 +18,8 @@ class DataWriter(Thread):
     def run(self):
         success = True
         queue = EventQueue.instance()
-        dbus = DBusHandler.instance()
-        pendrive = dbus.get_parent(self.path)
+        dbus_handler = DBusHandler.instance()
+        pendrive = dbus_handler.get_parent(self.path)
 
         queue.put(events.StatusUpdate(
                                       pendrive,
@@ -26,13 +27,14 @@ class DataWriter(Thread):
                                       "Montowanie..."
                                      ))
         try:
-            mountpath = dbus.mount(self.path)
+            mountpath = dbus_handler.mount(self.path)
         except dbus.DBusException:
             queue.put(events.StatusUpdate(
                                           pendrive,
                                           PendriveStore.DRIVE_ERROR,
                                           "Błąd podczas montowania!"
                                          ))
+            return
 
         queue.put(events.StatusUpdate(
                                       pendrive,
@@ -55,13 +57,14 @@ class DataWriter(Thread):
                                      ))
 
         try:
-            dbus.unmount(self.path)
+            dbus_handler.unmount(self.path)
         except dbus.DBusException:
             queue.put(events.StatusUpdate(
                                           pendrive,
                                           PendriveStore.DRIVE_ERROR,
                                           "Błąd podczas odmontowania!"
                                          ))
+            return
 
         if success:
             # TODO: Anything less primitive?
