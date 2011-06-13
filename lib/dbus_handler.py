@@ -37,7 +37,9 @@ class DBusHandler:
     def handler(self, *args, **kwargs):
         member = kwargs['member']
         path = args[0]
-        if member == "DeviceAdded" and self.is_drive(path):
+        if member == "DeviceAdded" and \
+           self.is_drive(path)     and \
+           self.get_conn_interface(path) == "usb":
             port = self.get_port(path)
             self.ev_queue.put(events.DriveAdded(path, port))
         if member == "DeviceAdded" and self.is_partition(path):
@@ -90,3 +92,7 @@ class DBusHandler:
                                         [],
                                         dbus_interface = 'org.freedesktop.UDisks.Device'
                                        )
+
+    def get_conn_interface(self, path):
+        device = self.get_device(path)
+        return self.get_prop(device, "DriveConnectionInterface")
