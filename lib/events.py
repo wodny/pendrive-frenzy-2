@@ -18,7 +18,7 @@ class DriveAdded(Event):
         self.port = port
 
     def handle(self, executor):
-        print("New drive: {0}".format(self.path))
+        print(_("New drive: {0}").format(self.path))
         executor.gui.pendrive_add(self.path, self.port)
 
 class PartitionAdded(Event):
@@ -27,7 +27,7 @@ class PartitionAdded(Event):
         self.parent = parent
 
     def handle(self, executor):
-        print("New partition: {0}".format(self.path))
+        print(_("New partition: {0}").format(self.path))
         executor.gui.partition_add(self.path, self.parent)
 
 class DeviceRemoved(Event):
@@ -35,7 +35,7 @@ class DeviceRemoved(Event):
         self.path = path
 
     def handle(self, executor):
-        print("Device removed: {0}".format(self.path))
+        print(_("Device removed: {0}").format(self.path))
         executor.gui.pendrive_remove(self.path)
 
 

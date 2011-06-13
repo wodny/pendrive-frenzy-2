@@ -1,5 +1,12 @@
 #!/usr/bin/python
 
+import gettext
+gettext.install("pendrive-frenzy", "locale")
+
+# Bind for PyGTK
+import locale
+locale.bindtextdomain("pendrive-frenzy", "locale")
+
 import pygtk
 pygtk.require('2.0')
 import gtk

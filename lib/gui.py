@@ -18,9 +18,9 @@ class PendriveListWrapper:
         self.cell_name = gtk.CellRendererText()
         self.cell_port = gtk.CellRendererText()
         self.cell_status = gtk.CellRendererText()
-        self.column_name = gtk.TreeViewColumn("Nazwa", self.cell_name, text=0)
-        self.column_port = gtk.TreeViewColumn("Port", self.cell_port, text=1)
-        self.column_status = gtk.TreeViewColumn("Status",
+        self.column_name = gtk.TreeViewColumn(_("Device"), self.cell_name, text=0)
+        self.column_port = gtk.TreeViewColumn(_("Port"), self.cell_port, text=1)
+        self.column_status = gtk.TreeViewColumn(_("Status"),
                                                 self.cell_status,
                                                 text=PendriveStore.COLUMN_STATUSTEXT,
                                                 background=PendriveStore.COLUMN_COLOR
@@ -97,7 +97,7 @@ class GUI(Thread):
 
     def __pendrive_add_idle(self, pendrive, port):
         self.pendrive_list.pendrive_store.store.append([
-            pendrive, port, "Nowy", PendriveStore.DRIVE_NEW, PendriveStore.COLOR_NEW
+            pendrive, port, _("New"), PendriveStore.DRIVE_NEW, PendriveStore.COLOR_NEW
         ])
 
     def pendrive_remove(self, pendrive):
@@ -120,7 +120,7 @@ class GUI(Thread):
         self.pendrive_list.pendrive_store.set_status(
                                                      parent_iter,
                                                      PendriveStore.DRIVE_SELECTED,
-                                                     "Zapis danych..."
+                                                     _("Writing data...")
                                                     )
         source_dir = self.source_dir.get_text()
         EventQueue.instance().put(events.WriteData(part, source_dir))

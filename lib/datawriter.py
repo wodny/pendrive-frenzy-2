@@ -24,7 +24,7 @@ class DataWriter(Thread):
         queue.put(events.StatusUpdate(
                                       pendrive,
                                       PendriveStore.DRIVE_INPROGRESS,
-                                      "Montowanie..."
+                                      _("Mounting...")
                                      ))
         try:
             mountpath = dbus_handler.mount(self.path)
@@ -32,14 +32,14 @@ class DataWriter(Thread):
             queue.put(events.StatusUpdate(
                                           pendrive,
                                           PendriveStore.DRIVE_ERROR,
-                                          "Błąd podczas montowania!"
+                                          _("Error while mounting!")
                                          ))
             return
 
         queue.put(events.StatusUpdate(
                                       pendrive,
                                       PendriveStore.DRIVE_INPROGRESS,
-                                      "Kopiowanie..."
+                                      _("Copying...")
                                      ))
 
         try:
@@ -53,7 +53,7 @@ class DataWriter(Thread):
         queue.put(events.StatusUpdate(
                                       pendrive,
                                       PendriveStore.DRIVE_INPROGRESS,
-                                      "Odmontowanie..."
+                                      _("Unmounting...")
                                      ))
 
         try:
@@ -62,7 +62,7 @@ class DataWriter(Thread):
             queue.put(events.StatusUpdate(
                                           pendrive,
                                           PendriveStore.DRIVE_ERROR,
-                                          "Błąd podczas odmontowania!"
+                                          _("Error while unmounting!")
                                          ))
             return
 
@@ -70,13 +70,13 @@ class DataWriter(Thread):
             # TODO: Anything less primitive?
             time.sleep(2)
             queue.put(events.StatusUpdate(
-                                      pendrive,
-                                      PendriveStore.DRIVE_DONE,
-                                      "Gotowe."
-                                     ))
+                                          pendrive,
+                                          PendriveStore.DRIVE_DONE,
+                                          _("Done.")
+                                         ))
         else:
             queue.put(events.StatusUpdate(
                                           pendrive,
                                           PendriveStore.DRIVE_ERROR,
-                                          "Błąd podczas kopiowania!"
+                                          _("Error while copying!")
                                          ))

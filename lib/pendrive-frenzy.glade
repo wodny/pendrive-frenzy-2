@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
-<interface>
+<interface domain="pendrive-frenzy">
   <requires lib="gtk+" version="2.16"/>
   <!-- interface-naming-policy project-wide -->
   <object class="GtkWindow" id="main_window">
-    <property name="title" translatable="yes">Pendrive Frenzy</property>
+    <property name="title" translatable="no">Pendrive Frenzy</property>
     <signal name="destroy" handler="on_main_window_destroy"/>
     <child>
       <object class="GtkVBox" id="vbox1">
@@ -14,7 +14,7 @@
             <property name="visible">True</property>
             <child>
               <object class="GtkToggleButton" id="writing_enabled">
-                <property name="label" translatable="yes">Zapis</property>
+                <property name="label" translatable="yes">Writing</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
@@ -31,7 +31,7 @@
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">&#x25CF;</property>
-                <property name="text" translatable="yes">/tmp</property>
+                <property name="text" translatable="no">/tmp</property>
               </object>
               <packing>
                 <property name="padding">4</property>
@@ -40,7 +40,7 @@
             </child>
             <child>
               <object class="GtkButton" id="select_source_dir">
-                <property name="label" translatable="yes">Wybierz &#x17A;r&#xF3;d&#x142;o</property>
+                <property name="label" translatable="yes">Select source</property>
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="receives_default">True</property>
