@@ -49,7 +49,7 @@ class DataWriter(Thread):
             print(e)
        
         # TODO: Anything less primitive?
-        time.sleep(1)
+        time.sleep(3)
         queue.put(events.StatusUpdate(
                                       pendrive,
                                       PendriveStore.DRIVE_INPROGRESS,
@@ -68,7 +68,7 @@ class DataWriter(Thread):
 
         if success:
             # TODO: Anything less primitive?
-            time.sleep(2)
+            time.sleep(3)
             queue.put(events.StatusUpdate(
                                           pendrive,
                                           PendriveStore.DRIVE_DONE,

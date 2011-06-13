@@ -57,7 +57,8 @@ class DBusHandler:
         return device.Get(
                           'org.freedesktop.UDisks.Device',
                           propname,
-                          dbus_interface = 'org.freedesktop.DBus.Properties'
+                          dbus_interface = 'org.freedesktop.DBus.Properties',
+                          timeout = 300
                          )
 
     def is_drive(self, path):
@@ -83,14 +84,16 @@ class DBusHandler:
             return self.get_prop(device, "DeviceMountPaths")[0]
         return device.FilesystemMount(
                                       "", [],
-                                      dbus_interface = 'org.freedesktop.UDisks.Device'
+                                      dbus_interface = 'org.freedesktop.UDisks.Device',
+                                      timeout = 300
                                      )
 
     def unmount(self, path):
         device = self.get_device(path)
         return device.FilesystemUnmount(
                                         [],
-                                        dbus_interface = 'org.freedesktop.UDisks.Device'
+                                        dbus_interface = 'org.freedesktop.UDisks.Device',
+                                        timeout = 300
                                        )
 
     def get_conn_interface(self, path):
