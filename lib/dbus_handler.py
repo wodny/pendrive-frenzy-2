@@ -39,9 +39,9 @@ class DBusHandler:
         member = kwargs['member']
         path = args[0]
         print("{0} - {1}".format(member, path))
+        #self.get_conn_interface(path) == "usb":
         if member == "DeviceAdded" and \
-           self.is_drive(path)     and \
-           self.get_conn_interface(path) == "usb":
+           self.is_drive(path)     :#and \
             port = self.get_port(path)
             self.events_out.send(DriveAdded(path, port))
         if member == "DeviceAdded" and self.is_partition(path):

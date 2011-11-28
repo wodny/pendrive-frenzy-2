@@ -23,7 +23,7 @@ def main():
         gui_launcher = GUILauncher(updates_out, events_in)
         gui_launcher.start()
 
-        d = Dispatch(events_out)
+        d = Dispatch(events_out, updates_in)
         d.start()
         d.join()
     except KeyboardInterrupt:

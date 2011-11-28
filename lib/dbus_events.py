@@ -1,3 +1,5 @@
+import gui_updates
+
 class DBusEvent:
     pass
 
@@ -8,6 +10,7 @@ class DriveAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New drive: {0}").format(self.path))
+        dispatch.updates_in.send(gui_updates.DriveAdded(self.path, self.port))
         #executor.gui.pendrive_add(self.path, self.port)
 
 class PartitionAdded(DBusEvent):

@@ -37,6 +37,20 @@ class PendriveListWrapper:
 class GUIDuplication(Exception):
     pass
 
+class Updater(Thread):
+    def __init__(self, updates_out, gui):
+        Thread.__init__(self)
+        self.daemon = True
+
+        self.updates_out = updates_out
+        self.gui = gui
+
+    def run(self):
+        while True:
+            update = self.updates_out.recv()
+            update.handle(self)
+
+
 class GUI:
     __single = None
 
@@ -60,6 +74,9 @@ class GUI:
         self.window.show()
 
     def loop(self):
+        updater = Updater(self.updates_out, self)
+        updater.start()
+
         gtk.main()
         self.events_in.send(Quit())
 
