@@ -1,32 +1,20 @@
-import Queue
-from threading import Thread, Timer
+import signal
+import multiprocessing
+from multiprocessing import Process
+from threading import Thread
 
+from lib.dbus_handler_launcher import DBusHandlerLauncher
 
-class EventQueue(Queue.Queue):
-    __single = None
-
-    def __init__(self):
-        if EventQueue.__single:
-            raise EventQueue.__single
-
-        Queue.Queue.__init__(self)
-        EventQueue.__single = self
-
-    @staticmethod
-    def instance():
-        return EventQueue.__single if EventQueue.__single else EventQueue()
-
-
-class Executor(Thread):
-    def __init__(self):
-        Thread.__init__(self)
-        self.daemon = True
-        self.queue = EventQueue.instance()
-        self.execute = True
-        self.gui = None
-        self.dbus = None
+class Dispatch(Process):
+    def __init__(self, queue):
+        Process.__init__(self)
+        #self.daemon = True
+        self.work = True
+        self.queue = queue
 
     def run(self):
-        while self.execute:
-            order = self.queue.get()
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
+        while self.work:
+            #order = self.queue.get()
+            order = self.queue.recv()
             order.handle(self)
