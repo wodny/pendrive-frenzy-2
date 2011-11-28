@@ -1,11 +1,15 @@
+import pygtk
+pygtk.require('2.0')
 import gtk
 import gobject
+
+gobject.threads_init()
+
 from gtk import Builder
 from threading import Thread
 import sys
 
-from dispatch import EventQueue
-import events
+from gui_events import *
 
 from pendrivestore import PendriveStore
 
@@ -30,16 +34,19 @@ class PendriveListWrapper:
         self.pendrive_view.append_column(self.column_status)
         self.pendrive_view.get_selection().set_mode(gtk.SELECTION_NONE)
 
-class GUI(Thread):
+class GUIDuplication(Exception):
+    pass
+
+class GUI:
     __single = None
 
-    def __init__(self):
+    def __init__(self, updates_out, events_in):
         if GUI.__single:
-            raise GUI.__single
+            raise GUIDuplication()
         GUI.__single = self
 
-        Thread.__init__(self)
-        self.daemon = True
+        self.updates_out = updates_out
+        self.events_in = events_in
 
         self.builder = Builder()
         self.builder.add_from_file(sys.path[0] + "/lib/pendrive-frenzy.glade")
@@ -52,9 +59,9 @@ class GUI(Thread):
         self.builder.connect_signals(self)
         self.window.show()
 
-    def run(self):
+    def loop(self):
         gtk.main()
-        EventQueue.instance().put(events.Quit())
+        self.events_in.send(Quit())
 
     @staticmethod
     def instance():
@@ -123,4 +130,4 @@ class GUI(Thread):
                                                      _("Writing data...")
                                                     )
         source_dir = self.source_dir.get_text()
-        EventQueue.instance().put(events.WriteData(part, source_dir))
+        #EventQueue.instance().put(events.WriteData(part, source_dir))

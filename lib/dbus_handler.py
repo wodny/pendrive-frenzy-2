@@ -10,7 +10,7 @@ class DBusHandler:
 
     def __init__(self, events_out):
         if DBusHandler.__single:
-            raise DBusHandlerDuplicated
+            raise DBusHandlerDuplicated()
         DBusHandler.__single = self
         self.events_out = events_out
 
