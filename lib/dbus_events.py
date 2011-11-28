@@ -11,7 +11,6 @@ class DriveAdded(DBusEvent):
     def handle(self, dispatch):
         print(_("New drive: {0}").format(self.path))
         dispatch.updates_in.send(gui_updates.DriveAdded(self.path, self.port))
-        #executor.gui.pendrive_add(self.path, self.port)
 
 class PartitionAdded(DBusEvent):
     def __init__(self, path, parent):
@@ -20,7 +19,7 @@ class PartitionAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New partition: {0}").format(self.path))
-        #executor.gui.partition_add(self.path, self.parent)
+        dispatch.updates_in.send(gui_updates.PartitionAdded(self.path, self.port))
 
 class DeviceRemoved(DBusEvent):
     def __init__(self, path):
@@ -28,4 +27,4 @@ class DeviceRemoved(DBusEvent):
 
     def handle(self, dispatch):
         print(_("Device removed: {0}").format(self.path))
-        #executor.gui.pendrive_remove(self.path)
+        dispatch.updates_in.send(gui_updates.DeviceRemoved(self.path))
