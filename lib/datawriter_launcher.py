@@ -65,7 +65,6 @@ class DataWriterLauncher(Process):
 
     def run(self):
         from datawriter import DataWriter
-        print("Running")
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         w = DataWriter(self.events_in, self.destination, self.source)
         w.run()

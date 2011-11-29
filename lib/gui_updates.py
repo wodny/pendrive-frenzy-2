@@ -35,7 +35,7 @@ class PartitionAdded(GUIUpdate):
         self.parent = parent
 
     def handle(self, updater):
-        updater.gui.partition_add(self.path, self.port)
+        updater.gui.partition_add(self.path, self.parent)
 
 class DeviceRemoved(GUIUpdate):
     def __init__(self, path):
