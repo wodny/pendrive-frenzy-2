@@ -36,9 +36,9 @@ class DriveAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New drive: {0}").format(self.path))
-        dispatch.updates_in.send(gui_updates.DriveAdded(self.path, self.port))
+        dispatch.updates_in.put(gui_updates.DriveAdded(self.path, self.port))
         if dispatch.writing:
-            dispatch.writers_in.send(WriterRequest(self.path, "le source"))
+            dispatch.writers_in.put(WriterRequest(self.path, "le source"))
 
 class PartitionAdded(DBusEvent):
     def __init__(self, path, parent):
@@ -47,7 +47,7 @@ class PartitionAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New partition: {0}").format(self.path))
-        #dispatch.updates_in.send(gui_updates.PartitionAdded(self.path, self.parent))
+        #dispatch.updates_in.put(gui_updates.PartitionAdded(self.path, self.parent))
 
 class DeviceRemoved(DBusEvent):
     def __init__(self, path):
@@ -55,5 +55,12 @@ class DeviceRemoved(DBusEvent):
 
     def handle(self, dispatch):
         print(_("Device removed: {0}").format(self.path))
-        dispatch.updates_in.send(gui_updates.DeviceRemoved(self.path))
-        dispatch.writers_in.send(WriterRequest(self.path, "le source", True))
+        dispatch.updates_in.put(gui_updates.DeviceRemoved(self.path))
+        dispatch.writers_in.put(WriterRequest(self.path, "le source", True))
+
+class Dummy(DBusEvent):
+    def __init__(self, text):
+        self.text = text
+
+    def handle(self, dispatch):
+        print("TEXT: {0}".format(self.text))

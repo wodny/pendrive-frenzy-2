@@ -29,7 +29,15 @@ class DBusHandlerLauncher(Process):
     def run(self):
         from dbus_handler import DBusHandler
         import gobject
+        gobject.threads_init()
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         h = DBusHandler(self.events_out)
         loop = gobject.MainLoop()
         loop.run()
+        #import time
+        #import dbus_events
+        #i = 0
+        #while i < 10:
+        #    self.events_out.put(dbus_events.Dummy("DBusHandlerLauncher"))
+        #    i += 1
+        #    time.sleep(3)

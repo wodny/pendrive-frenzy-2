@@ -35,9 +35,12 @@ from lib.datawriter_launcher import DataWriterSpawner
       
 
 def main():
-    (events_out, events_in) = multiprocessing.Pipe(False)
-    (updates_out, updates_in) = multiprocessing.Pipe(False)
-    (writers_out, writers_in) = multiprocessing.Pipe(False)
+    qevents = multiprocessing.Queue(100000)
+    qupdates = multiprocessing.Queue(100000)
+    qwriters = multiprocessing.Queue(100000)
+    #(events_out, events_in) = multiprocessing.Pipe(False)
+    #(updates_out, updates_in) = multiprocessing.Pipe(False)
+    #(writers_out, writers_in) = multiprocessing.Pipe(False)
 
     writers = dict()
 
@@ -64,23 +67,27 @@ def main():
 
     try:
         # Spawn DBus events handler
-        dbus_launcher = DBusHandlerLauncher(events_in)
+        dbus_launcher = DBusHandlerLauncher(qevents)
         dbus_launcher.start()
 
         # Spawn GUI
-        gui_launcher = GUILauncher(updates_out, events_in)
+        gui_launcher = GUILauncher(qupdates, qevents)
         gui_launcher.start()
 
         # Spawn Dispatch/Logic
-        d = Dispatch(events_out, updates_in, writers_in)
+        d = Dispatch(qevents, qupdates, qwriters)
         d.start()
 
         # Spawn writers on request
-        dws = DataWriterSpawner(writers_out, writers, events_in)
+        dws = DataWriterSpawner(qwriters, writers, qevents)
         dws.start()
 
         # Join to Dispatch/Logic
         d.join()
+        #print("Before sleep")
+        #import time
+        #time.sleep(30)
+        #print("After sleep")
     except KeyboardInterrupt:
         pass
     print(_("Quiting... ^C will force termination."))
@@ -91,7 +98,7 @@ def main():
     gui_launcher.terminate()
     gui_launcher.join()
     print(_("Terminating DataWriter sprawner..."))
-    writers_in.send(None)
+    qwriters.put(None)
     dws.join()
     print(_("Terminating writers..."))
     for writer in writers:
@@ -99,7 +106,7 @@ def main():
         writers[writer].terminate()
         writers[writer].join()
     print(_("Terminating logic..."))
-    events_in.send(Quit())
+    qevents.put(Quit())
     d.join()
     print(_("Bye."))
 

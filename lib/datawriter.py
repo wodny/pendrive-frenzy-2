@@ -37,7 +37,7 @@ class DataWriter:
         #pendrive = dbus_handler.get_parent(self.destination)
         pendrive = self.destination
 
-        self.events_in.send(StatusUpdate(
+        self.events_in.put(StatusUpdate(
                                       pendrive,
                                       DriveStatus.DRIVE_INPROGRESS,
                                       _("Mounting...")
@@ -46,7 +46,7 @@ class DataWriter:
             #mountdestination = dbus_handler.mount(self.destination)
             pass
         except dbus.DBusException:
-            self.events_in.send(StatusUpdate(
+            self.events_in.put(StatusUpdate(
                                           pendrive,
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while mounting!")
@@ -54,7 +54,7 @@ class DataWriter:
             return
 
         time.sleep(1)
-        self.events_in.send(StatusUpdate(
+        self.events_in.put(StatusUpdate(
                                       pendrive,
                                       DriveStatus.DRIVE_INPROGRESS,
                                       _("Copying...")
@@ -70,7 +70,7 @@ class DataWriter:
         time.sleep(1)
         # TODO: Anything less primitive?
         #time.sleep(3)
-        self.events_in.send(StatusUpdate(
+        self.events_in.put(StatusUpdate(
                                       pendrive,
                                       DriveStatus.DRIVE_INPROGRESS,
                                       _("Unmounting...")
@@ -81,7 +81,7 @@ class DataWriter:
             #dbus_handler.unmount(self.destination)
             pass
         except dbus.DBusException:
-            self.events_in.send(StatusUpdate(
+            self.events_in.put(StatusUpdate(
                                           pendrive,
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while unmounting!")
@@ -92,13 +92,13 @@ class DataWriter:
         if success:
             # TODO: Anything less primitive?
             #time.sleep(3)
-            self.events_in.send(StatusUpdate(
+            self.events_in.put(StatusUpdate(
                                           pendrive,
                                           DriveStatus.DRIVE_DONE,
                                           _("Done.")
                                          ))
         else:
-            self.events_in.send(StatusUpdate(
+            self.events_in.put(StatusUpdate(
                                           pendrive,
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while copying!")

@@ -38,7 +38,7 @@ class DataWriterSpawner(Thread):
         del self.writers[writer_req.destination]
 
     def run(self):
-        writer_req = self.writers_out.recv()
+        writer_req = self.writers_out.get()
         while writer_req:
             if writer_req.remove:
                 if writer_req.destination in self.writers:
@@ -50,7 +50,7 @@ class DataWriterSpawner(Thread):
                 else:
                     print("New writer for {0}".format(writer_req.destination))
                     self.new_datawriter(writer_req)
-            writer_req = self.writers_out.recv()
+            writer_req = self.writers_out.get()
         print("DataWriter spawner exiting...")
 
 

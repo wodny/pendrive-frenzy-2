@@ -37,5 +37,5 @@ class Dispatch(Process):
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         while self.work:
-            order = self.events_out.recv()
+            order = self.events_out.get()
             order.handle(self)

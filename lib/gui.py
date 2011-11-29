@@ -65,7 +65,7 @@ class Updater(Thread):
 
     def run(self):
         while True:
-            update = self.updates_out.recv()
+            update = self.updates_out.get()
             update.handle(self)
 
 
@@ -90,7 +90,7 @@ class GUI:
         updater.start()
 
         gtk.main()
-        self.events_in.send(Quit())
+        self.events_in.put(Quit())
 
     @staticmethod
     def instance():
@@ -116,7 +116,7 @@ class GUI:
     def on_writing_pressed(self, widget, data = None):
         active = self.writing_active()
         self.source_dir.set_sensitive(active)
-        self.events_in.send(WritingChanged(not active, self.source_dir.get_text()))
+        self.events_in.put(WritingChanged(not active, self.source_dir.get_text()))
 
     def writing_active(self):
         return self.writing_enabled.get_active()

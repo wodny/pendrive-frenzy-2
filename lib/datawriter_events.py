@@ -29,7 +29,7 @@ class StatusUpdate(DataWriterEvent):
         self.status_text = status_text
 
     def handle(self, dispatch):
-        dispatch.updates_in.send(
+        dispatch.updates_in.put(
             gui_updates.StatusUpdate(
                 self.pendrive,
                 self.status_code,
