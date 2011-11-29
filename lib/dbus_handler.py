@@ -22,8 +22,8 @@ from dbus_events import *
 from dbus_tools import DBusTools
 
 class DBusHandler:
-    def __init__(self, events_out):
-        self.events_out = events_out
+    def __init__(self, events_in):
+        self.events_in = events_in
 
         DBusGMainLoop(set_as_default=True)
     
@@ -51,8 +51,8 @@ class DBusHandler:
         if member == "DeviceAdded" and \
            self.tools.is_drive(path)     :#and \
             port = self.tools.get_port(path)
-            self.events_out.put(DriveAdded(path, port))
+            self.events_in.put(DriveAdded(path, port))
         if member == "DeviceAdded" and self.tools.is_partition(path):
-            self.events_out.put(PartitionAdded(path, self.tools.get_parent(path)))
+            self.events_in.put(PartitionAdded(path, self.tools.get_parent(path)))
         if member == "DeviceRemoved":
-            self.events_out.put(DeviceRemoved(path))
+            self.events_in.put(DeviceRemoved(path))

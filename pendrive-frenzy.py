@@ -31,13 +31,16 @@ from lib.master_events import Quit
 from lib.dbus_handler_launcher import DBusHandlerLauncher
 from lib.gui_launcher import GUILauncher
 from lib.datawriter_launcher import DataWriterSpawner
+import threading
+import sys
 
-      
+import time
 
 def main():
-    qevents = multiprocessing.Queue(100000)
-    qupdates = multiprocessing.Queue(100000)
-    qwriters = multiprocessing.Queue(100000)
+    qevents = multiprocessing.Queue()
+    qupdates = multiprocessing.Queue()
+    qwriters = multiprocessing.Queue()
+    qquits = multiprocessing.Queue()
     #(events_out, events_in) = multiprocessing.Pipe(False)
     #(updates_out, updates_in) = multiprocessing.Pipe(False)
     #(writers_out, writers_in) = multiprocessing.Pipe(False)
@@ -67,7 +70,7 @@ def main():
 
     try:
         # Spawn DBus events handler
-        dbus_launcher = DBusHandlerLauncher(qevents)
+        dbus_launcher = DBusHandlerLauncher(qevents, qquits)
         dbus_launcher.start()
 
         # Spawn GUI
@@ -84,31 +87,69 @@ def main():
 
         # Join to Dispatch/Logic
         d.join()
-        #print("Before sleep")
-        #import time
-        #time.sleep(30)
-        #print("After sleep")
     except KeyboardInterrupt:
         pass
     print(_("Quiting... ^C will force termination."))
     print(_("Terminating DBus handler..."))
-    dbus_launcher.terminate()
+
+    qquits.put(None)
+    qquits.close()
+    qquits.join_thread()
     dbus_launcher.join()
+
     print(_("Terminating GUI..."))
-    gui_launcher.terminate()
+    qupdates.close()
+    qupdates.join_thread()
     gui_launcher.join()
+
     print(_("Terminating DataWriter sprawner..."))
     qwriters.put(None)
     dws.join()
+    qwriters.close()
+    qwriters.join_thread()
+
     print(_("Terminating writers..."))
     for writer in writers:
         print("  {0}".format(writer))
-        writers[writer].terminate()
         writers[writer].join()
+
     print(_("Terminating logic..."))
-    qevents.put(Quit())
+    #qevents.put(Quit())
+    qevents.close()
+    qevents.join_thread()
     d.join()
+
     print(_("Bye."))
+
+    #qevents.close()
+    #qevents.join_thread()
+    #qupdates.close()
+    #qupdates.join_thread()
+    #qwriters.close()
+    #qwriters.join_thread()
+    #qquits.close()
+    #qquits.join_thread()
+
+
+    #print(sys._current_frames())
+    #print("")
+    #print(threading.enumerate())
+    ##time.sleep(2)
+    #print("")
+    #print(threading.enumerate())
+    #print(sys._current_frames())
+
+    # http://bugs.python.org/issue9207
+    for thread in threading.enumerate()[1:]:
+        thread.join()
+
+    #print("LOCAL THREADS")
+    #for thread in threading.enumerate()[1:]:
+    #    print("THREAD: {0}".format(thread))
+    #    thread.join()
+    #print("--")
+
+    #time.sleep(2)
 
 if __name__ == '__main__':
     main()

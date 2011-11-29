@@ -20,13 +20,14 @@ import signal
 import multiprocessing
 from multiprocessing import Process
 from threading import Thread
+import threading
 
 from lib.dbus_handler_launcher import DBusHandlerLauncher
 
 class Dispatch(Process):
     def __init__(self, events_out, updates_in, writers_in):
         Process.__init__(self)
-        #self.daemon = True
+        self.daemon = False
         self.work = True
         self.events_out = events_out
         self.updates_in = updates_in
@@ -38,4 +39,17 @@ class Dispatch(Process):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         while self.work:
             order = self.events_out.get()
+            print("ORDER: {0}".format(order))
             order.handle(self)
+        print("CLOSING")
+        self.updates_in.close()
+        self.updates_in.join_thread()
+        self.writers_in.close()
+        self.writers_in.join_thread()
+        self.events_out.close()
+        self.events_out.join_thread()
+        print("DISPATCH END")
+        print("DISPATCH THREADS:")
+        print(threading.enumerate())
+        print("---------------")
+

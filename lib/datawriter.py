@@ -103,3 +103,7 @@ class DataWriter:
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while copying!")
                                          ))
+
+        self.events_in.close()
+        self.events_in.join_thread()
+        print("WRITER END")

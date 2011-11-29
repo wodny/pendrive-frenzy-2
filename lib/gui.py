@@ -33,6 +33,8 @@ from gui_events import *
 from pendrivestore import PendriveStore
 from drive_statuses import DriveStatus
 
+import threading
+
 class PendriveListWrapper:
     def __init__(self, pendrive_view):
         self.pendrive_view = pendrive_view
@@ -58,7 +60,7 @@ class PendriveListWrapper:
 class Updater(Thread):
     def __init__(self, updates_out, gui):
         Thread.__init__(self)
-        self.daemon = True
+        #self.daemon = True
 
         self.updates_out = updates_out
         self.gui = gui
@@ -91,6 +93,15 @@ class GUI:
 
         gtk.main()
         self.events_in.put(Quit())
+        self.events_in.close()
+        self.events_in.join_thread()
+        self.updates_out.close()
+        self.updates_out.join_thread()
+
+        print("GUI THREADS:")
+        print(threading.enumerate())
+        print("---------------")
+
 
     @staticmethod
     def instance():

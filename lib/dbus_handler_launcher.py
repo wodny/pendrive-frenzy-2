@@ -16,28 +16,61 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
+from threading import Thread
 from multiprocessing import Process
 import signal
+import threading
+
+class DBusHandlerQuiter(Thread):
+    def __init__(self, loop, quits_out):
+        Thread.__init__(self)
+        self.daemon = False
+        self.loop = loop
+        self.quits_out = quits_out
+
+    def run(self):
+        print("BEFORE GET")
+        self.quits_out.get()
+        print("AFTER GET")
+        import gobject
+        gobject.idle_add(self.loop.quit)
+        print("AFTER IDLE")
+        self.quits_out.close()
+        self.quits_out.join_thread()
+        print("HANDLER THREADS:")
+        print(threading.enumerate())
+        print("---------------")
 
 class DBusHandlerLauncher(Process):
-    def __init__(self, events_out):
+    def __init__(self, events_in, quits_out):
         Process.__init__(self)
-        self.daemon = True
-        self.events_out = events_out
-
+        #self.daemon = True
+        self.events_in = events_in
+        self.quits_out = quits_out
+    
     def run(self):
         from dbus_handler import DBusHandler
         import gobject
         gobject.threads_init()
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        h = DBusHandler(self.events_out)
+
+        h = DBusHandler(self.events_in)
         loop = gobject.MainLoop()
+
+        q = DBusHandlerQuiter(loop, self.quits_out)
+        q.start()
+
         loop.run()
+
+        self.events_in.close()
+        self.events_in.join_thread()
+        self.quits_out.close()
+        self.quits_out.join_thread()
+        print("LAUNCHER END")
         #import time
         #import dbus_events
         #i = 0
         #while i < 10:
-        #    self.events_out.put(dbus_events.Dummy("DBusHandlerLauncher"))
+        #    self.events_in.put(dbus_events.Dummy("DBusHandlerLauncher"))
         #    i += 1
         #    time.sleep(3)
