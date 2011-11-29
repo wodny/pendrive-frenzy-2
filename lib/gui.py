@@ -119,8 +119,8 @@ class GUI:
 
     def on_writing_pressed(self, widget, data = None):
         active = self.writing_active()
-        self.source_dir.set_sensitive(active)
-        self.events_in.put(WritingChanged(not active, self.source_dir.get_text()))
+        self.source_dir.set_sensitive(not active)
+        self.events_in.put(WritingChanged(active, self.source_dir.get_text()))
 
     def writing_active(self):
         return self.writing_enabled.get_active()
