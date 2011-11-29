@@ -1,4 +1,5 @@
 import gui_updates
+from datawriter import DataWriter
 
 class DBusEvent:
     pass

@@ -12,6 +12,7 @@ import sys
 from gui_events import *
 
 from pendrivestore import PendriveStore
+from drive_statuses import DriveStatus
 
 class PendriveListWrapper:
     def __init__(self, pendrive_view):
@@ -121,7 +122,7 @@ class GUI:
 
     def __pendrive_add_idle(self, pendrive, port):
         self.pendrive_list.pendrive_store.store.append([
-            pendrive, port, _("New"), PendriveStore.DRIVE_NEW, PendriveStore.COLOR_NEW
+            pendrive, port, _("New"), DriveStatus.DRIVE_NEW, PendriveStore.COLOR_NEW
         ])
 
     def pendrive_remove(self, pendrive):
@@ -136,15 +137,16 @@ class GUI:
         gobject.idle_add(self.__partition_add_idle, part, parent)
 
     def __partition_add_idle(self, part, parent):
-        if not self.writing_active(): return
-        parent_iter = self.pendrive_list.pendrive_store.find(parent)
-        if parent_iter is None: return
-        statuscode, statustext = self.pendrive_list.pendrive_store.get_status(parent_iter)
-        if statuscode != PendriveStore.DRIVE_NEW: return
-        self.pendrive_list.pendrive_store.set_status(
-                                                     parent_iter,
-                                                     PendriveStore.DRIVE_SELECTED,
-                                                     _("Writing data...")
-                                                    )
-        source_dir = self.source_dir.get_text()
-        #EventQueue.instance().put(events.WriteData(part, source_dir))
+        #if not self.writing_active(): return
+        #parent_iter = self.pendrive_list.pendrive_store.find(parent)
+        #if parent_iter is None: return
+        #statuscode, statustext = self.pendrive_list.pendrive_store.get_status(parent_iter)
+        #if statuscode != PendriveStore.DRIVE_NEW: return
+        #self.pendrive_list.pendrive_store.set_status(
+        #                                             parent_iter,
+        #                                             PendriveStore.DRIVE_SELECTED,
+        #                                             _("Writing data...")
+        #                                            )
+        #source_dir = self.source_dir.get_text()
+        ##EventQueue.instance().put(events.WriteData(part, source_dir))
+        pass

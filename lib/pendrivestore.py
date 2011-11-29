@@ -1,23 +1,18 @@
 import gtk
+from drive_statuses import DriveStatus
 
 class PendriveStore:
-    DRIVE_NEW = 0
-    DRIVE_SELECTED = 1
-    DRIVE_INPROGRESS = 2
-    DRIVE_DONE = 3
-    DRIVE_ERROR = 4
-
     COLOR_NEW = "White"
     COLOR_DONE = "LightGreen"
     COLOR_INPROGRESS = "Gold"
     COLOR_ERROR = "Red"
 
     code_to_color = {
-                     DRIVE_NEW: COLOR_NEW,
-                     DRIVE_SELECTED: COLOR_INPROGRESS,
-                     DRIVE_INPROGRESS: COLOR_INPROGRESS,
-                     DRIVE_DONE: COLOR_DONE,
-                     DRIVE_ERROR: COLOR_ERROR
+                     DriveStatus.DRIVE_NEW: COLOR_NEW,
+                     DriveStatus.DRIVE_SELECTED: COLOR_INPROGRESS,
+                     DriveStatus.DRIVE_INPROGRESS: COLOR_INPROGRESS,
+                     DriveStatus.DRIVE_DONE: COLOR_DONE,
+                     DriveStatus.DRIVE_ERROR: COLOR_ERROR
                     }
 
     COLUMN_STATUSTEXT = 2

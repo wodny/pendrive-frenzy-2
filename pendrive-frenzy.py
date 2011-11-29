@@ -28,7 +28,7 @@ def main():
         d.join()
     except KeyboardInterrupt:
         pass
-    print(_("Quiting... another ^C will force termination."))
+    print(_("Quiting... ^C will force termination."))
     print(_("Terminating DBus handler..."))
     dbus_launcher.terminate()
     dbus_launcher.join()

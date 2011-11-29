@@ -24,3 +24,12 @@ class DeviceRemoved(GUIUpdate):
 
     def handle(self, updater):
         updater.gui.pendrive_remove(self.path)
+
+class StatusUpdate(GUIUpdate):
+    def __init__(self, pendrive, status_code, status_text):
+        self.pendrive = pendrive
+        self.status_code = status_code
+        self.status_text = status_text
+
+    def handle(self, updater):
+        updater.gui.status_update(self.pendrive, self.status_code, self.status_text)
