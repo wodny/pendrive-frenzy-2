@@ -41,6 +41,27 @@ def main():
 
     writers = dict()
 
+    # Bus diagram
+    #
+    #  .______________________________________________________.
+    #  |                                                      |
+    #  |                                  DBus events         |
+    #  |                    updates             |             |
+    #  |                                       \|/       |#|  |
+    #  |                      |#|               '        |#|  |
+    #  |                      |#|         DBusHandler -->|#|--'
+    #  |                      |#|                        |#| 
+    #  '-> Dispatch/Logic --->|#|--> GUI --------------->|#|
+    #             |           |#|                        |#| 
+    #             |      |#|                             |#| 
+    #             '----->|#|------> DataWriterSpawner -->|#| 
+    #                    |#|                             |#| 
+    #                    |#|                                
+    #                                                  events
+    #                  writers
+    #                         
+
+
     try:
         # Spawn DBus events handler
         dbus_launcher = DBusHandlerLauncher(events_in)
