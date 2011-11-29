@@ -1,9 +1,9 @@
-from gui_updates import StatusUpdate
+import gui_updates
 
-class WriterEvent:
+class DataWriterEvent:
     pass
 
-class StatusUpdate(WriterEvent):
+class StatusUpdate(DataWriterEvent):
     def __init__(self, pendrive, status_code, status_text):
         self.pendrive = pendrive
         self.status_code = status_code
@@ -11,7 +11,7 @@ class StatusUpdate(WriterEvent):
 
     def handle(self, dispatch):
         dispatch.updates_in.send(
-            StatusUpdate(
+            gui_updates.StatusUpdate(
                 self.pendrive,
                 self.status_code,
                 self.status_text
