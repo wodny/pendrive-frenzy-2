@@ -31,6 +31,8 @@ class Dispatch(Process):
         self.events_out = events_out
         self.updates_in = updates_in
         self.writers_in = writers_in
+        self.writing = None
+        self.source = None
 
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)

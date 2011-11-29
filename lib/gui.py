@@ -113,6 +113,11 @@ class GUI:
             self.source_dir.set_text(source)
         chooser.destroy()
 
+    def on_writing_pressed(self, widget, data = None):
+        active = self.writing_active()
+        self.source_dir.set_sensitive(active)
+        self.events_in.send(WritingChanged(not active, self.source_dir.get_text()))
+
     def writing_active(self):
         return self.writing_enabled.get_active()
 

@@ -29,20 +29,27 @@ class DataWriterSpawner(Thread):
         self.writers = writers
         self.events_in = events_in
 
+    def new_datawriter(self, writer_req):
+        dw = DataWriterLauncher(self.events_in, writer_req.destination, writer_req.source)
+        self.writers[writer_req.destination] = dw
+        dw.start()
+
+    def del_datawriter(self, writer_req):
+        del self.writers[writer_req.destination]
+
     def run(self):
         writer_req = self.writers_out.recv()
         while writer_req:
-            if writer_req.destination not in self.writers:
-                print("New writer")
-                dw = DataWriterLauncher(self.events_in, writer_req.destination, writer_req.source)
-                self.writers[writer_req.destination] = dw
-                dw.start()
-            else:
-                if writer_req.remove:
-                    del self.writers[writer_req.destination]
+            if writer_req.remove:
+                if writer_req.destination in self.writers:
+                    self.del_datawriter(writer_req)
                     print("Removed writer for {0}".format(writer_req.destination))
-                else:
+            else:
+                if writer_req.destination in self.writers:
                     print("Already writing this destination")
+                else:
+                    print("New writer for {0}".format(writer_req.destination))
+                    self.new_datawriter(writer_req)
             writer_req = self.writers_out.recv()
         print("DataWriter spawner exiting...")
 

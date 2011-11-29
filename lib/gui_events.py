@@ -24,3 +24,12 @@ class Quit(GUIEvent):
     def handle(self, dispatch):
         print(_("GUI quit"))
         dispatch.work = False
+
+class WritingChanged(GUIEvent):
+    def __init__(self, writing, source):
+        self.writing = writing
+        self.source = source
+
+    def handle(self, dispatch):
+        dispatch.writing = self.writing
+        dispatch.source = self.source
