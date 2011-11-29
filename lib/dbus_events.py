@@ -47,7 +47,7 @@ class PartitionAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New partition: {0}").format(self.path))
-        dispatch.updates_in.send(gui_updates.PartitionAdded(self.path, self.parent))
+        #dispatch.updates_in.send(gui_updates.PartitionAdded(self.path, self.parent))
 
 class DeviceRemoved(DBusEvent):
     def __init__(self, path):
