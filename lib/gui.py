@@ -54,8 +54,6 @@ class PendriveListWrapper:
         self.pendrive_view.append_column(self.column_status)
         self.pendrive_view.get_selection().set_mode(gtk.SELECTION_NONE)
 
-class GUIDuplication(Exception):
-    pass
 
 class Updater(Thread):
     def __init__(self, updates_out, gui):
@@ -72,13 +70,7 @@ class Updater(Thread):
 
 
 class GUI:
-    __single = None
-
     def __init__(self, updates_out, events_in):
-        if GUI.__single:
-            raise GUIDuplication()
-        GUI.__single = self
-
         self.updates_out = updates_out
         self.events_in = events_in
 

@@ -80,6 +80,7 @@ def main():
     print(_("Terminating logic..."))
     events_in.send(Quit())
     d.join()
+    print(_("Bye."))
 
 if __name__ == '__main__':
     main()

@@ -21,16 +21,8 @@ from dbus.mainloop.glib import DBusGMainLoop
 from dbus_events import *
 from dbus_tools import DBusTools
 
-class DBusHandlerDuplicated(Exception):
-    pass
-
 class DBusHandler:
-    __single = None
-
     def __init__(self, events_out):
-        if DBusHandler.__single:
-            raise DBusHandlerDuplicated()
-        DBusHandler.__single = self
         self.events_out = events_out
 
         DBusGMainLoop(set_as_default=True)
@@ -50,11 +42,6 @@ class DBusHandler:
         # Assure the UDisks service runs
         self.tools = DBusTools()
         self.tools.get_device("/org/freedesktop/UDisks")
-
-
-    @staticmethod
-    def instance():
-        return DBusHandler.__single if DBusHandler.__single else DBusHandler()
 
     def handler(self, *args, **kwargs):
         member = kwargs['member']
