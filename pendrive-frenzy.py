@@ -26,24 +26,21 @@ import locale
 locale.bindtextdomain("pendrive-frenzy", "locale")
 
 import multiprocessing
+import threading
+
 from lib.dispatch import Dispatch
-from lib.master_events import Quit
 from lib.dbus_handler_launcher import DBusHandlerLauncher
 from lib.gui_launcher import GUILauncher
+from lib.gui_updates import Quit
 from lib.datawriter_launcher import DataWriterSpawner
-import threading
-import sys
 
-import time
+
 
 def main():
     qevents = multiprocessing.Queue()
     qupdates = multiprocessing.Queue()
     qwriters = multiprocessing.Queue()
     qquits = multiprocessing.Queue()
-    #(events_out, events_in) = multiprocessing.Pipe(False)
-    #(updates_out, updates_in) = multiprocessing.Pipe(False)
-    #(writers_out, writers_in) = multiprocessing.Pipe(False)
 
     writers = dict()
 
@@ -88,7 +85,7 @@ def main():
         # Join to Dispatch/Logic
         d.join()
     except KeyboardInterrupt:
-        pass
+        qupdates.put(Quit())
     print(_("Quiting... ^C will force termination."))
     print(_("Terminating DBus handler..."))
 
@@ -114,42 +111,19 @@ def main():
         writers[writer].join()
 
     print(_("Terminating logic..."))
-    #qevents.put(Quit())
     qevents.close()
     qevents.join_thread()
     d.join()
 
-    print(_("Bye."))
-
-    #qevents.close()
-    #qevents.join_thread()
-    #qupdates.close()
-    #qupdates.join_thread()
-    #qwriters.close()
-    #qwriters.join_thread()
-    #qquits.close()
-    #qquits.join_thread()
-
-
-    #print(sys._current_frames())
-    #print("")
-    #print(threading.enumerate())
-    ##time.sleep(2)
-    #print("")
-    #print(threading.enumerate())
-    #print(sys._current_frames())
-
+    # Probably there really is a bug in multiprocessing
     # http://bugs.python.org/issue9207
-    for thread in threading.enumerate()[1:]:
+    # semi-fix?
+    remaining_threads = threading.enumerate()[1:]
+    print("Waiting for {0} remaining thread(s)...".format(len(remaining_threads)))
+    for thread in remaining_threads:
         thread.join()
 
-    #print("LOCAL THREADS")
-    #for thread in threading.enumerate()[1:]:
-    #    print("THREAD: {0}".format(thread))
-    #    thread.join()
-    #print("--")
-
-    #time.sleep(2)
+    print(_("Bye."))
 
 if __name__ == '__main__':
     main()

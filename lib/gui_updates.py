@@ -52,3 +52,7 @@ class StatusUpdate(GUIUpdate):
 
     def handle(self, updater):
         updater.gui.status_update(self.pendrive, self.status_code, self.status_text)
+
+class Quit(GUIUpdate):
+    def handle(self, updater):
+        updater.gui.quit()

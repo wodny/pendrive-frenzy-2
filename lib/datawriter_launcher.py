@@ -18,7 +18,6 @@
 
 
 from threading import Thread
-import threading
 from multiprocessing import Process
 import signal
 
@@ -26,7 +25,6 @@ import signal
 class DataWriterSpawner(Thread):
     def __init__(self, writers_out, writers, events_in):
         Thread.__init__(self)
-        self.daemon = False
         self.writers_out = writers_out
         self.writers = writers
         self.events_in = events_in
@@ -41,7 +39,6 @@ class DataWriterSpawner(Thread):
 
     def run(self):
         writer_req = self.writers_out.get()
-        print("REQ 00")
         while writer_req:
             if writer_req.remove:
                 if writer_req.destination in self.writers:
@@ -57,18 +54,12 @@ class DataWriterSpawner(Thread):
         print("DataWriter spawner exiting...")
         self.writers_out.close()
         self.writers_out.join_thread()
-        #self.events_in.close()
-        #self.events_in.join_thread()
-        print("SPAWNER THREADS:")
-        print(threading.enumerate())
-        print("---------------")
 
 
 
 class DataWriterLauncher(Process):
     def __init__(self, events_in, destination, source):
         Process.__init__(self)
-        #self.daemon = True
         self.events_in = events_in
         self.destination = destination
         self.source = source
