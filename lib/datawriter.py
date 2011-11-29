@@ -106,4 +106,3 @@ class DataWriter:
 
         self.events_in.close()
         self.events_in.join_thread()
-        print("WRITER END")

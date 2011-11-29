@@ -94,7 +94,7 @@ def main():
     qquits.join_thread()
     dbus_launcher.join()
 
-    print(_("Terminating GUI..."))
+    print(_("Waiting for GUI..."))
     qupdates.close()
     qupdates.join_thread()
     gui_launcher.join()
@@ -105,12 +105,12 @@ def main():
     qwriters.close()
     qwriters.join_thread()
 
-    print(_("Terminating writers..."))
+    print(_("Waiting for writers..."))
     for writer in writers:
         print("  {0}".format(writer))
         writers[writer].join()
 
-    print(_("Terminating logic..."))
+    print(_("Waiting for logic..."))
     qevents.close()
     qevents.join_thread()
     d.join()
