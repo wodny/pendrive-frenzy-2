@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 #    Copyright 2011  Marcin Szewczyk <Marcin.Szewczyk@wodny.org>
 #
 #    This file is part of pendrive-frenzy.
@@ -22,6 +24,9 @@ from multiprocessing import Process
 from threading import Thread
 
 from lib.dbus_handler_launcher import DBusHandlerLauncher
+from drive_statuses import DriveStatus
+from partition_statuses import PartitionStatus
+import gui_updates
 
 class Dispatch(Process):
     def __init__(self, events_out, updates_in, writers_in):
@@ -34,9 +39,57 @@ class Dispatch(Process):
         self.config = None
 
         self.drive_partitions = dict()
-        self.drive_partitions_awaited = dict()
-        self.drive_partitions_done = dict()
-        self.drive_partitions_failed = dict()
+
+    def get_partitions_by_status(self, parent, status):
+        if parent not in self.drive_partitions:
+            return []
+        return [
+            part
+            for part in self.drive_partitions[parent]
+            if self.drive_partitions[parent][part] == status
+        ]
+
+    def parts_to_numbers(self, parent, parts):
+        parts = [ part[len(parent):] for part in parts ]
+        return ",".join( parts ) if len(parts) else "-"
+
+    def update_gui_status(self, parent):
+        awaited = self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
+        available = self.get_partitions_by_status(parent, PartitionStatus.AVAILABLE)
+        in_progress = self.get_partitions_by_status(parent, PartitionStatus.IN_PROGRESS)
+        done = self.get_partitions_by_status(parent, PartitionStatus.DONE)
+        failed = self.get_partitions_by_status(parent, PartitionStatus.FAILED)
+
+        summary = "{0} → {1} → {2} → {3}; failed: {4}".format(
+            self.parts_to_numbers(parent, awaited),
+            self.parts_to_numbers(parent, available),
+            self.parts_to_numbers(parent, in_progress),
+            self.parts_to_numbers(parent, done),
+            self.parts_to_numbers(parent, failed)
+        )
+
+        drive_status = DriveStatus.DRIVE_NEW
+        if len(awaited):
+            drive_status = DriveStatus.DRIVE_SELECTED
+        if len(available) or len(in_progress):
+            drive_status = DriveStatus.DRIVE_INPROGRESS 
+        if \
+            len(awaited) == 0 and \
+            len(available) == 0 and \
+            len(in_progress) == 0 and \
+            len(done):
+                drive_status = DriveStatus.DRIVE_DONE 
+        if len(failed):
+            drive_status = DriveStatus.DRIVE_ERROR
+
+        self.updates_in.put(
+            gui_updates.StatusUpdate(
+                parent,
+                drive_status,
+                summary
+            )
+        )
+
 
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)

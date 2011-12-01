@@ -46,7 +46,7 @@ class PendriveListWrapper:
         self.cell_status = gtk.CellRendererText()
         self.column_name = gtk.TreeViewColumn(_("Device"), self.cell_name, text=0)
         self.column_port = gtk.TreeViewColumn(_("Port"), self.cell_port, text=1)
-        self.column_status = gtk.TreeViewColumn(_("Status"),
+        self.column_status = gtk.TreeViewColumn(_("Partitions status"),
                                                 self.cell_status,
                                                 text=PendriveStore.COLUMN_STATUSTEXT,
                                                 background=PendriveStore.COLUMN_COLOR

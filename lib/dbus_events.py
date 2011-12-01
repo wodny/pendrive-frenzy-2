@@ -19,6 +19,8 @@
 
 import gui_updates
 from datawriter_events import DataWriterRequest
+from partition_statuses import PartitionStatus
+
 
 class DBusEvent:
     pass
@@ -31,11 +33,16 @@ class DriveAdded(DBusEvent):
     def handle(self, dispatch):
         print(_("New drive: {0}").format(self.path))
         if dispatch.writing and dispatch.config:
-            dispatch.drive_partitions[self.path] = set()
-            dispatch.drive_partitions_awaited[self.path] = set(
-                ( "{0}{1}".format(self.path, p) for p in dispatch.config.partitions )
+            dispatch.drive_partitions[self.path] = dict(
+                (   [
+                        "{0}{1}".format(self.path, p),
+                        PartitionStatus.AWAITED
+                    ]
+                    for p in dispatch.config.partitions
+                )
             )
         dispatch.updates_in.put(gui_updates.DriveAdded(self.path, self.port))
+        dispatch.update_gui_status(self.path)
 
 
 class PartitionAdded(DBusEvent):
@@ -45,12 +52,23 @@ class PartitionAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New partition: {0}").format(self.path))
-        if dispatch.writing and dispatch.config:
-            if self.parent in dispatch.drive_partitions:
-                dispatch.drive_partitions[self.parent] |= set((self.path,))
-            if dispatch.drive_partitions[self.parent] & dispatch.drive_partitions_awaited[self.parent] == dispatch.drive_partitions_awaited[self.parent]:
-                for p in dispatch.drive_partitions_awaited[self.parent]:
-                    dispatch.writers_in.put(DataWriterRequest(p, "le source"))
+        if dispatch.writing and dispatch.config and self.parent in dispatch.drive_partitions:
+            if self.path not in dispatch.drive_partitions[self.parent]:
+                dispatch.drive_partitions[self.parent][self.path] = PartitionStatus.IGNORED
+                return
+            if dispatch.drive_partitions[self.parent][self.path] == PartitionStatus.IGNORED:
+                return
+            dispatch.drive_partitions[self.parent][self.path] = PartitionStatus.AVAILABLE
+            awaited = \
+                dispatch.get_partitions_by_status(self.parent, PartitionStatus.AWAITED)
+
+            if len(awaited) == 0:
+                available = \
+                    dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)
+                for part in available:
+                    dispatch.drive_partitions[self.parent][part] = PartitionStatus.IN_PROGRESS
+                    dispatch.writers_in.put(DataWriterRequest(part, "le source"))
+            dispatch.update_gui_status(self.parent)
 
 class DeviceRemoved(DBusEvent):
     def __init__(self, path):

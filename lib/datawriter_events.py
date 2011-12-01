@@ -38,33 +38,12 @@ class StatusUpdate(DataWriterEvent):
         self.status_text = status_text
 
     def handle(self, dispatch):
-        print("{0}: {1} {2}".format(self.partition, self.status_code, self.status_text))
-        print(dispatch.drive_partitions)
-        print(dispatch.drive_partitions_awaited)
-        print(dispatch.drive_partitions_done)
-        print(dispatch.drive_partitions_failed)
-        print("")
-
-        awaited = ",".join([ p[len(self.parent):] for p in dispatch.drive_partitions_awaited[self.parent] ])
-        done = ",".join([ p[len(self.parent):] for p in dispatch.drive_partitions_awaited[self.parent] ])
-        failed = ",".join([ p[len(self.parent):] for p in dispatch.drive_partitions_awaited[self.parent] ])
-
-        dispatch.updates_in.put(
-            gui_updates.StatusUpdate(
-                self.parent,
-                self.status_code,
-                "Awaited: {0}, done: {1}, failed: {2}".format(
-                    awaited,
-                    done,
-                    failed
-                )
-            )
-        )
-
+        dispatch.drive_partitions[self.parent][self.partition] = self.status_code
+        dispatch.update_gui_status(self.parent)
         dispatch.updates_in.put(
             gui_updates.StatusBarUpdate(self.status_text)
         )
-
+        
 class DataWriterDone(DataWriterEvent):
     def __init__(self, destination, source, remove):
         self.destination = destination
