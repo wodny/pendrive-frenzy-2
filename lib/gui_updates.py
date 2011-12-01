@@ -60,6 +60,13 @@ class InfoBarUpdate(GUIUpdate):
     def handle(self, updater):
         updater.gui.infobar_update(self.info)
 
+class StatusBarUpdate(GUIUpdate):
+    def __init__(self, status):
+        self.status = status
+
+    def handle(self, updater):
+        updater.gui.statusbar_update(self.status)
+
 class Quit(GUIUpdate):
     def handle(self, updater):
         updater.gui.quit()

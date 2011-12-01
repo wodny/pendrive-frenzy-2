@@ -82,6 +82,8 @@ class GUI:
         self.pendrive_list = PendriveListWrapper( self.builder.get_object("pendrive_list") )
         self.writing_enabled = self.builder.get_object("writing_enabled")
         self.infobar = self.builder.get_object("infobar")
+        self.statusbar = self.builder.get_object("statusbar")
+        self.statusbar_contextid = self.statusbar.get_context_id("default")
 
         self.builder.connect_signals(self)
         self.window.show()
@@ -130,6 +132,13 @@ class GUI:
 
     def __infobar_update(self, info):
         self.infobar.set_text(info)
+
+    def statusbar_update(self, status):
+        gobject.idle_add(self.__statusbar_update, status)
+
+    def __statusbar_update(self, status):
+        self.statusbar.pop(self.statusbar_contextid)
+        self.statusbar.push(self.statusbar_contextid, status)
 
     def status_update(self, pendrive, status_code, status_text):
         gobject.idle_add(self.__status_update_idle, pendrive, status_code, status_text)
