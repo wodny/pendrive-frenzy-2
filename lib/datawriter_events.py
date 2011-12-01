@@ -18,21 +18,58 @@
 
 
 import gui_updates
+from drive_statuses import DriveStatus
+
+
+class DataWriterRequest:
+    def __init__(self, destination, source, remove = False):
+        self.destination = destination
+        self.source = source
+        self.remove = remove
 
 class DataWriterEvent:
     pass
 
 class StatusUpdate(DataWriterEvent):
-    def __init__(self, pendrive, status_code, status_text):
-        self.pendrive = pendrive
+    def __init__(self, parent, partition, status_code, status_text):
+        self.parent = parent
+        self.partition = partition
         self.status_code = status_code
         self.status_text = status_text
 
     def handle(self, dispatch):
+        print("{0}: {1} {2}".format(self.partition, self.status_code, self.status_text))
+        print(dispatch.drive_partitions)
+        print(dispatch.drive_partitions_awaited)
+        print(dispatch.drive_partitions_done)
+        print(dispatch.drive_partitions_failed)
+        print("")
+
+        awaited = ",".join([ p[len(self.parent):] for p in dispatch.drive_partitions_awaited[self.parent] ])
+        done = ",".join([ p[len(self.parent):] for p in dispatch.drive_partitions_awaited[self.parent] ])
+        failed = ",".join([ p[len(self.parent):] for p in dispatch.drive_partitions_awaited[self.parent] ])
+
         dispatch.updates_in.put(
             gui_updates.StatusUpdate(
-                self.pendrive,
+                self.parent,
                 self.status_code,
-                self.status_text
+                "Awaited: {0}, done: {1}, failed: {2}".format(
+                    awaited,
+                    done,
+                    failed
+                )
             )
         )
+
+        dispatch.updates_in.put(
+            gui_updates.StatusBarUpdate(self.status_text)
+        )
+
+class DataWriterDone(DataWriterEvent):
+    def __init__(self, destination, source, remove):
+        self.destination = destination
+        self.source = source
+        self.remove = remove
+
+    def handle(self, dispatch):
+        dispatch.writers_in.put(DataWriterRequest(self.destination, self.source, True))

@@ -33,6 +33,11 @@ class Dispatch(Process):
         self.writing = None
         self.config = None
 
+        self.drive_partitions = dict()
+        self.drive_partitions_awaited = dict()
+        self.drive_partitions_done = dict()
+        self.drive_partitions_failed = dict()
+
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         while self.work:

@@ -12,9 +12,9 @@ class Config:
         for i in ("mode", "description", "copycommand", "copycommand_params"):
             self.parser.get("general", i)
 
-        parts = self.parser.getint("general", "partitions")
+        self.partitions = set( int(part) for part in self.parser.get("general", "partitions").split(',') )
 
-        for p in range(1, parts+1):
+        for p in self.partitions:
             section = "partition_{0}".format(p)
             self.parser.getint(section, "start")
             self.parser.getint(section, "size")

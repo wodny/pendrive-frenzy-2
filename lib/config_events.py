@@ -12,10 +12,11 @@ class ReadConfig(ConfigEvent):
     def handle(self, dispatch):
         try:
             config = Config(self.path)
-            print(_("Configuration loaded."))
+            loaded_msg = _("Configuration loaded ({0}).".format(self.path))
+            print(loaded_msg)
             dispatch.config = config
             description = config.get_description()
-            dispatch.updates_in.put(gui_updates.StatusBarUpdate(_("Configuration loaded.")))
+            dispatch.updates_in.put(gui_updates.StatusBarUpdate(loaded_msg))
             dispatch.updates_in.put(gui_updates.InfoBarUpdate(description))
         except (ConfigParser.Error, ValueError) as e:
             print(_("Configuration parsing error."))

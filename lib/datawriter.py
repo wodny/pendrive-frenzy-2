@@ -2,20 +2,20 @@
 
 #    Copyright 2011  Marcin Szewczyk <Marcin.Szewczyk@wodny.org>
 #
-#    This file is part of pendrive-frenzy.
+#    This file is part of self.destination-frenzy.
 #
-#    Pendrive-frenzy is free software: you can redistribute it and/or modify
+#    self.destination-frenzy is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 #
-#    Pendrive-frenzy is distributed in the hope that it will be useful,
+#    self.destination-frenzy is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 #
 #    You should have received a copy of the GNU General Public License
-#    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
+#    along with self.destination-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
 import subprocess
@@ -23,22 +23,26 @@ import time
 
 from drive_statuses import DriveStatus
 from datawriter_events import StatusUpdate
+from dbus_tools import DBusTools
 
 class DataWriter:
     def __init__(self, events_in, destination, source):
         self.destination = destination
         self.source = source
         self.events_in = events_in
+        self.tools = DBusTools()
+        self.parent = self.tools.get_parent(destination)
 
     def run(self):
         success = True
+
         #queue = EventQueue.instance()
         #dbus_handler = DBusHandler.instance()
-        #pendrive = dbus_handler.get_parent(self.destination)
-        pendrive = self.destination
+        #self.destination = dbus_handler.get_parent(self.destination)
 
         self.events_in.put(StatusUpdate(
-                                      pendrive,
+                                      self.parent,
+                                      self.destination,
                                       DriveStatus.DRIVE_INPROGRESS,
                                       _("Mounting...")
                                      ))
@@ -47,7 +51,8 @@ class DataWriter:
             pass
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
-                                          pendrive,
+                                          self.parent,
+                                          self.destination,
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while mounting!")
                                          ))
@@ -55,7 +60,8 @@ class DataWriter:
 
         time.sleep(1)
         self.events_in.put(StatusUpdate(
-                                      pendrive,
+                                      self.parent,
+                                      self.destination,
                                       DriveStatus.DRIVE_INPROGRESS,
                                       _("Copying...")
                                      ))
@@ -71,7 +77,8 @@ class DataWriter:
         # TODO: Anything less primitive?
         #time.sleep(3)
         self.events_in.put(StatusUpdate(
-                                      pendrive,
+                                      self.parent,
+                                      self.destination,
                                       DriveStatus.DRIVE_INPROGRESS,
                                       _("Unmounting...")
                                      ))
@@ -82,7 +89,8 @@ class DataWriter:
             pass
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
-                                          pendrive,
+                                          self.parent,
+                                          self.destination,
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while unmounting!")
                                          ))
@@ -93,16 +101,15 @@ class DataWriter:
             # TODO: Anything less primitive?
             #time.sleep(3)
             self.events_in.put(StatusUpdate(
-                                          pendrive,
+                                          self.parent,
+                                          self.destination,
                                           DriveStatus.DRIVE_DONE,
                                           _("Done.")
                                          ))
         else:
             self.events_in.put(StatusUpdate(
-                                          pendrive,
+                                          self.parent,
+                                          self.destination,
                                           DriveStatus.DRIVE_ERROR,
                                           _("Error while copying!")
                                          ))
-
-        self.events_in.close()
-        self.events_in.join_thread()

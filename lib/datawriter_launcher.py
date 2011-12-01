@@ -20,6 +20,7 @@
 from threading import Thread
 from multiprocessing import Process
 import signal
+from datawriter_events import DataWriterDone
 
 
 class DataWriterSpawner(Thread):
@@ -69,3 +70,6 @@ class DataWriterLauncher(Process):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         w = DataWriter(self.events_in, self.destination, self.source)
         w.run()
+        self.events_in.put(DataWriterDone(self.destination, self.source, True))
+        self.events_in.close()
+        self.events_in.join_thread()
