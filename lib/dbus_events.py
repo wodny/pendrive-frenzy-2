@@ -37,7 +37,7 @@ class DriveAdded(DBusEvent):
     def handle(self, dispatch):
         print(_("New drive: {0}").format(self.path))
         dispatch.updates_in.put(gui_updates.DriveAdded(self.path, self.port))
-        if dispatch.writing:
+        if dispatch.writing and dispatch.config:
             dispatch.writers_in.put(WriterRequest(self.path, "le source"))
 
 class PartitionAdded(DBusEvent):

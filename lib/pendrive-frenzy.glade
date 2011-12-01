@@ -36,11 +36,11 @@
               </packing>
             </child>
             <child>
-              <object class="GtkEntry" id="source_dir">
+              <object class="GtkEntry" id="infobar">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
                 <property name="invisible_char">●</property>
-                <property name="text">/tmp</property>
+                <property name="sensitive">False</property>
               </object>
               <packing>
                 <property name="expand">True</property>

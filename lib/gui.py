@@ -29,6 +29,7 @@ from threading import Thread
 import sys
 
 from gui_events import *
+from config_events import ReadConfig
 
 from pendrivestore import PendriveStore
 from drive_statuses import DriveStatus
@@ -80,7 +81,7 @@ class GUI:
         self.window = self.builder.get_object("main_window")
         self.pendrive_list = PendriveListWrapper( self.builder.get_object("pendrive_list") )
         self.writing_enabled = self.builder.get_object("writing_enabled")
-        self.source_dir = self.builder.get_object("source_dir")
+        self.infobar = self.builder.get_object("infobar")
 
         self.builder.connect_signals(self)
         self.window.show()
@@ -105,7 +106,7 @@ class GUI:
 
     def on_select_source_dir_pressed(self, widget, data = None):
         chooser = gtk.FileChooserDialog(
-                                        action = gtk.FILE_CHOOSER_ACTION_SELECT_FOLDER,
+                                        action = gtk.FILE_CHOOSER_ACTION_OPEN,
                                         buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
                                                    gtk.STOCK_OPEN, gtk.RESPONSE_OK)
                                        )
@@ -113,17 +114,22 @@ class GUI:
         response = chooser.run()
         if response == gtk.RESPONSE_OK:
             source = chooser.get_filename()
-            if not source.endswith('/'): source += '/'
-            self.source_dir.set_text(source)
+            self.infobar.set_text(_("Loading config: {0}...".format(source)))
+            self.events_in.put(ReadConfig(source))
         chooser.destroy()
 
     def on_writing_pressed(self, widget, data = None):
         active = self.writing_active()
-        self.source_dir.set_sensitive(not active)
-        self.events_in.put(WritingChanged(active, self.source_dir.get_text()))
+        self.events_in.put(WritingChanged(active))
 
     def writing_active(self):
         return self.writing_enabled.get_active()
+
+    def infobar_update(self, info):
+        gobject.idle_add(self.__infobar_update, info)
+
+    def __infobar_update(self, info):
+        self.infobar.set_text(info)
 
     def status_update(self, pendrive, status_code, status_text):
         gobject.idle_add(self.__status_update_idle, pendrive, status_code, status_text)

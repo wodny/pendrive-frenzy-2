@@ -53,6 +53,13 @@ class StatusUpdate(GUIUpdate):
     def handle(self, updater):
         updater.gui.status_update(self.pendrive, self.status_code, self.status_text)
 
+class InfoBarUpdate(GUIUpdate):
+    def __init__(self, info):
+        self.info = info
+
+    def handle(self, updater):
+        updater.gui.infobar_update(self.info)
+
 class Quit(GUIUpdate):
     def handle(self, updater):
         updater.gui.quit()

@@ -28,12 +28,14 @@ locale.bindtextdomain("pendrive-frenzy", "locale")
 import multiprocessing
 import threading
 
+import sys
+
 from lib.dispatch import Dispatch
 from lib.dbus_handler_launcher import DBusHandlerLauncher
 from lib.gui_launcher import GUILauncher
 from lib.gui_updates import Quit
 from lib.datawriter_launcher import DataWriterSpawner
-
+from lib.config_events import ReadConfig
 
 
 def main():
@@ -78,6 +80,9 @@ def main():
         d = Dispatch(qevents, qupdates, qwriters)
         d.start()
 
+        if len(sys.argv) >= 2:
+            qevents.put(ReadConfig(sys.argv[1]))
+        
         # Spawn writers on request
         dws = DataWriterSpawner(qwriters, writers, qevents)
         dws.start()
