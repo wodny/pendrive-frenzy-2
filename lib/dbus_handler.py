@@ -45,9 +45,14 @@ class DBusHandler:
 
     def handler(self, *args, **kwargs):
         member = kwargs['member']
-        path = args[0]
         #print("{0} - {1}".format(member, path))
         #self.tools.get_conn_interface(path) == "usb":
+
+        if len(args) >= 1:
+            path = args[0]
+        else:
+            return
+
         if member == "DeviceAdded" and \
            self.tools.is_drive(path)     :#and \
             port = self.tools.get_port(path)
@@ -56,3 +61,8 @@ class DBusHandler:
             self.events_in.put(PartitionAdded(path, self.tools.get_parent(path)))
         if member == "DeviceRemoved":
             self.events_in.put(DeviceRemoved(path))
+
+        if member == "DeviceJobChanged":
+            (in_progress, job_id, uid, cancellable, percentage) = args[1:]
+            if job_id == "PartitionTableCreate":
+                self.events_in.put(PartitionTableCreated(path))

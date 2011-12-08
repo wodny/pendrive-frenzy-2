@@ -12,6 +12,9 @@ class Config:
         for i in ("mode", "description", "copycommand", "copycommand_params"):
             self.parser.get("general", i)
 
+        # TODO: get_description incompatible with this
+        self.mode = self.parser.get("general", "mode")
+
         self.partitions = set( int(part) for part in self.parser.get("general", "partitions").split(',') )
 
         for p in self.partitions:

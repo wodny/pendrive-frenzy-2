@@ -38,6 +38,7 @@ class Dispatch(Process):
         self.writing = None
         self.config = None
 
+        self.drive_statuses = dict()
         self.drive_partitions = dict()
 
     def get_partitions_by_status(self, parent, status):

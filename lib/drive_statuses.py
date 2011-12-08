@@ -23,3 +23,5 @@ class DriveStatus:
     DRIVE_INPROGRESS = 2
     DRIVE_DONE = 3
     DRIVE_ERROR = 4
+    DRIVE_WAITFORPT = 5
+    DRIVE_PTDONE = 6

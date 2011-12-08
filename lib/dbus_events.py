@@ -19,8 +19,8 @@
 
 import gui_updates
 from datawriter_events import DataWriterRequest
+from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
-
 
 class DBusEvent:
     pass
@@ -41,6 +41,12 @@ class DriveAdded(DBusEvent):
                     for p in dispatch.config.partitions
                 )
             )
+            if dispatch.config.mode == "create-mbr":
+                dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_WAITFORPT
+            else:
+                dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_NEW
+        if self.path in dispatch.drive_statuses:
+            print("DRIVE STATUS (ADD): {0}".format(dispatch.drive_statuses[self.path]))
         dispatch.updates_in.put(gui_updates.DriveAdded(self.path, self.port))
         dispatch.update_gui_status(self.path)
 
@@ -52,7 +58,12 @@ class PartitionAdded(DBusEvent):
 
     def handle(self, dispatch):
         print(_("New partition: {0}").format(self.path))
-        if dispatch.writing and dispatch.config and self.parent in dispatch.drive_partitions:
+        if self.path in dispatch.drive_statuses:
+            print("DRIVE STATUS (PADD): {0}".format(dispatch.drive_statuses[self.path]))
+        if    dispatch.writing \
+          and dispatch.config \
+          and self.parent in dispatch.drive_statuses \
+          and dispatch.drive_statuses[self.parent] in (DriveStatus.DRIVE_NEW, DriveStatus.DRIVE_PTDONE):
             if self.path not in dispatch.drive_partitions[self.parent]:
                 dispatch.drive_partitions[self.parent][self.path] = PartitionStatus.IGNORED
                 return
@@ -76,12 +87,23 @@ class DeviceRemoved(DBusEvent):
 
     def handle(self, dispatch):
         print(_("Device removed: {0}").format(self.path))
+        if self.path in dispatch.drive_statuses:
+            print("DRIVE STATUS (RM): {0}".format(dispatch.drive_statuses[self.path]))
         try:
             del dispatch.drive_partitions[self.path]
+            del dispatch.drive_statuses[self.path]
         except KeyError:
             pass
         dispatch.updates_in.put(gui_updates.DeviceRemoved(self.path))
         dispatch.writers_in.put(DataWriterRequest(self.path, "le source", True))
+
+class PartitionTableCreated(DBusEvent):
+    def __init__(self, path):
+        self.path = path
+
+    def handle(self, dispatch):
+        print(_("Partition table created: {0}").format(self.path))
+        dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_PTDONE
 
 class Dummy(DBusEvent):
     def __init__(self, text):
