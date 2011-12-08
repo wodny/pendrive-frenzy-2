@@ -43,6 +43,7 @@ class DriveAdded(DBusEvent):
             )
             if dispatch.config.mode == "create-mbr":
                 dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_WAITFORPT
+                # PT Creation here
             else:
                 dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_NEW
         if self.path in dispatch.drive_statuses:
@@ -63,7 +64,7 @@ class PartitionAdded(DBusEvent):
         if    dispatch.writing \
           and dispatch.config \
           and self.parent in dispatch.drive_statuses \
-          and dispatch.drive_statuses[self.parent] in (DriveStatus.DRIVE_NEW, DriveStatus.DRIVE_PTDONE):
+          and dispatch.drive_statuses[self.parent] == DriveStatus.DRIVE_NEW:
             if self.path not in dispatch.drive_partitions[self.parent]:
                 dispatch.drive_partitions[self.parent][self.path] = PartitionStatus.IGNORED
                 return
@@ -103,7 +104,11 @@ class PartitionTableCreated(DBusEvent):
 
     def handle(self, dispatch):
         print(_("Partition table created: {0}").format(self.path))
+        # TODO
+        # PT
+        # Set part. statuses as available/in progress
         dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_PTDONE
+        # FS creation here and worker right after that
 
 class Dummy(DBusEvent):
     def __init__(self, text):

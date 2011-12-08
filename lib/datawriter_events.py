@@ -38,6 +38,7 @@ class StatusUpdate(DataWriterEvent):
         self.status_text = status_text
 
     def handle(self, dispatch):
+        # TODO: Probably we should catch sth if someone removes a drive in progress
         dispatch.drive_partitions[self.parent][self.partition] = self.status_code
         dispatch.update_gui_status(self.parent)
         dispatch.updates_in.put(
