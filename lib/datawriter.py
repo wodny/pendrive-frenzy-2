@@ -32,7 +32,9 @@ class MBRWriter:
     def __init__(self, events_in, request):
         self.events_in = events_in
         self.request = request
-        self.drive = request.device
+
+        self.drive = request.drive
+        self.tools = DBusTools()
 
     def run(self):
         time.sleep(2)
@@ -45,12 +47,15 @@ class MBRWriter:
                                      ))
 
 class PartitionWriter:
-    def __init__(self, events_in, partition, source):
-        self.partition = partition
-        self.source = source
+    def __init__(self, events_in, request):
         self.events_in = events_in
+        self.request = request
+
+        self.parent = request.parent
+        self.part = request.part
+        self.partspec = request.partspec
+
         self.tools = DBusTools()
-        self.parent = self.tools.get_parent(partition)
 
     def run(self):
         random.seed()
@@ -58,32 +63,32 @@ class PartitionWriter:
 
         #queue = EventQueue.instance()
         #dbus_handler = DBusHandler.instance()
-        #self.partition = dbus_handler.get_parent(self.partition)
+        #self.part = dbus_handler.get_parent(self.part)
 
         self.events_in.put(StatusUpdate(
                                       self.parent,
-                                      self.partition,
+                                      self.part,
                                       PartitionStatus.IN_PROGRESS,
-                                      _("Mounting {0}...".format(self.partition))
+                                      _("Mounting {0}...".format(self.part))
                                      ))
         try:
-            #mountpartition = dbus_handler.mount(self.partition)
+            #mountpartition = dbus_handler.mount(self.part)
             pass
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.parent,
-                                          self.partition,
+                                          self.part,
                                           PartitionStatus.FAILED,
-                                          _("Error while mounting {0}!".format(self.partition))
+                                          _("Error while mounting {0}!".format(self.part))
                                          ))
             return
 
         time.sleep(random.randint(1,5))
         self.events_in.put(StatusUpdate(
                                       self.parent,
-                                      self.partition,
+                                      self.part,
                                       PartitionStatus.IN_PROGRESS,
-                                      _("Copying to {0}...".format(self.partition))
+                                      _("Copying to {0}...".format(self.part))
                                      ))
 
         try:
@@ -98,21 +103,21 @@ class PartitionWriter:
         #time.sleep(random.randint(1,5))
         self.events_in.put(StatusUpdate(
                                       self.parent,
-                                      self.partition,
+                                      self.part,
                                       PartitionStatus.IN_PROGRESS,
-                                      _("Unmounting {0}...".format(self.partition))
+                                      _("Unmounting {0}...".format(self.part))
                                      ))
 
         time.sleep(random.randint(1,5))
         try:
-            #dbus_handler.unmount(self.partition)
+            #dbus_handler.unmount(self.part)
             pass
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.parent,
-                                          self.partition,
+                                          self.part,
                                           PartitionStatus.FAILED,
-                                          _("Error while unmounting {0}!".format(self.partition))
+                                          _("Error while unmounting {0}!".format(self.part))
                                          ))
             return
 
@@ -122,24 +127,24 @@ class PartitionWriter:
             #time.sleep(random.randint(1,5))
             self.events_in.put(StatusUpdate(
                                           self.parent,
-                                          self.partition,
+                                          self.part,
                                           PartitionStatus.DONE,
-                                          _("Done {0}.".format(self.partition))
+                                          _("Done {0}.".format(self.part))
                                          ))
         else:
             self.events_in.put(StatusUpdate(
                                           self.parent,
-                                          self.partition,
+                                          self.part,
                                           PartitionStatus.FAILED,
-                                          _("Error while copying {0}!".format(self.partition))
+                                          _("Error while copying {0}!".format(self.part))
                                          ))
 
         if random.randint(1,3) < 2:
             self.events_in.put(StatusUpdate(
                                           self.parent,
-                                          self.partition,
+                                          self.part,
                                           PartitionStatus.FAILED,
-                                          _("Error while copying {0}!".format(self.partition))
+                                          _("Error while copying {0}!".format(self.part))
                                          ))
 
 

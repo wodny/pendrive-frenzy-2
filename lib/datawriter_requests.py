@@ -21,10 +21,10 @@ class DataWriterRequest:
     pass
 
 class PartitionWriterRequest(DataWriterRequest):
-    def __init__(self, parent, part, partspecs):
+    def __init__(self, parent, part, partspec):
         self.parent = parent
         self.part = part
-        self.partspecs = partspecs
+        self.partspec = partspec
 
     def handle(self, writers, events_in):
         print("PARTITION WRITER REQUEST {0} {1} {2}".format(self.parent, self.part, self.partspec))
@@ -32,19 +32,22 @@ class PartitionWriterRequest(DataWriterRequest):
             print("Already have writer for this part.")
             return
         print("Spawning writer")
+        l = PartitionWriterLauncher(events_in, self)
+        writers[self.part] = l
+        l.start()
 
 class MBRWriterRequest(DataWriterRequest):
-    def __init__(self, device, partspecs):
-        self.device = device
+    def __init__(self, drive, partspecs):
+        self.drive = drive
         self.partspecs = partspecs
 
     def handle(self, writers, events_in):
-        print("MBR WRITER REQUEST {0}".format(self.device))
-        if self.device in writers:
+        print("MBR WRITER REQUEST {0}".format(self.drive))
+        if self.drive in writers:
             print("Already have writer for this device.")
             return
         print("Spawning MBR writer")
         l = MBRWriterLauncher(events_in, self)
-        writers[self.device] = l
+        writers[self.drive] = l
         l.start()
 

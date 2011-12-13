@@ -59,8 +59,8 @@ class PartitionAdded(DBusEvent):
                 dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)
             for p in available:
                 dispatch.drive_partitions[self.parent][p] = PartitionStatus.IN_PROGRESS
-                # TODO: reenable
-                #dispatch.writers_in.put(DataWriterRequest(part, "le source"))
+                # TODO partspec
+                dispatch.writers_in.put(PartitionWriterRequest(self.parent, p, None))
         dispatch.update_gui_status(self.parent)
 
 

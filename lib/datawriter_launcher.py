@@ -55,7 +55,7 @@ class PartitionWriterLauncher(DataWriterLauncher):
     def run(self):
         self.prerun()
         from datawriter import PartitionWriter
-        #w = PartitionWriter(self.events_in, self.request)
-        #w.run()
+        w = PartitionWriter(self.events_in, self.request)
+        w.run()
         self.events_in.put(DataWriterDone(self.request.part))
         self.postrun()
