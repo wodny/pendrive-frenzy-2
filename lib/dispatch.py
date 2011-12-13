@@ -65,12 +65,15 @@ class Dispatch(Process):
            self.drive_statuses[parent] == DriveStatus.DRIVE_WAITFORPT:
             summary = "Waiting for MBR..."
         else:
-            summary = "{0} → {1} → {2} → {3}; failed: {4}".format(
+            failed_text = ""
+            if failed:
+                failed_text = "; failed: {0}".format(self.parts_to_numbers(parent, failed))
+            summary = "{0} → {1} → {2} → {3}{4}".format(
                 self.parts_to_numbers(parent, awaited),
                 self.parts_to_numbers(parent, available),
                 self.parts_to_numbers(parent, in_progress),
                 self.parts_to_numbers(parent, done),
-                self.parts_to_numbers(parent, failed)
+                failed_text
             )
 
         drive_status = DriveStatus.DRIVE_NEW
