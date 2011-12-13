@@ -23,6 +23,7 @@ from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 from dbus_tools import DBusTools
 from datawriter_requests import PartitionWriterRequest, MBRWriterRequest
+import tools
 
 class DBusEvent:
     pass
@@ -37,7 +38,7 @@ class DriveAdded(DBusEvent):
         if added:
             if dispatch.config.mode == "create-mbr":
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_WAITFORPT
-                dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config.partspec))
+                dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config.partspecs))
             else:
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
         if self.drive in dispatch.drive_statuses:
@@ -59,8 +60,8 @@ class PartitionAdded(DBusEvent):
                 dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)
             for p in available:
                 dispatch.drive_partitions[self.parent][p] = PartitionStatus.IN_PROGRESS
-                # TODO partspec
-                dispatch.writers_in.put(PartitionWriterRequest(self.parent, p, None))
+                partspec = dispatch.config.partspecs[tools.partnumber(self.parent, p)]
+                dispatch.writers_in.put(PartitionWriterRequest(self.parent, p, partspec))
         dispatch.update_gui_status(self.parent)
 
 

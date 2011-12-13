@@ -43,7 +43,7 @@ class MBRWriter:
                                       self.drive,
                                       None,
                                       None,
-                                      _("MBR for {0} created.".format(self.request.device))
+                                      _("MBR for {0} created.".format(self.drive))
                                      ))
 
 class PartitionWriter:

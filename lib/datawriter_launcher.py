@@ -44,7 +44,7 @@ class MBRWriterLauncher(DataWriterLauncher):
         from datawriter import MBRWriter
         w = MBRWriter(self.events_in, self.request)
         w.run()
-        self.events_in.put(DataWriterDone(self.request.device))
+        self.events_in.put(DataWriterDone(self.request.drive))
         self.postrun()
 
 

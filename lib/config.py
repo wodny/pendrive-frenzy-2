@@ -21,14 +21,14 @@ class Config:
 
         self.partitions = set( int(part) for part in self.parser.get("general", "partitions").split(',') )
 
-        self.partspec = dict()
+        self.partspecs = dict()
 
         for p in self.partitions:
             section = "partition_{0}".format(p)
-            self.partspec[p] = dict()
-            self.partspec[p]["start"] = self.parser.getint(section, "start")
-            self.partspec[p]["size"] = self.parser.getint(section, "size")
-            self.partspec[p]["type"] = self.parser.get(section, "type")
-            self.partspec[p]["fstype"] = self.parser.get(section, "fstype")
-            self.partspec[p]["label"] = self.parser.get(section, "label")
-            self.partspec[p]["boot"] = self.parser.getboolean(section, "boot")
+            self.partspecs[p] = dict()
+            self.partspecs[p]["start"] = self.parser.getint(section, "start")
+            self.partspecs[p]["size"] = self.parser.getint(section, "size")
+            self.partspecs[p]["type"] = self.parser.get(section, "type")
+            self.partspecs[p]["fstype"] = self.parser.get(section, "fstype")
+            self.partspecs[p]["label"] = self.parser.get(section, "label")
+            self.partspecs[p]["boot"] = self.parser.getboolean(section, "boot")

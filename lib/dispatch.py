@@ -27,6 +27,7 @@ from lib.dbus_handler_launcher import DBusHandlerLauncher
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 import gui_updates
+import tools
 
 class Dispatch(Process):
     def __init__(self, events_out, updates_in, writers_in):
@@ -51,7 +52,7 @@ class Dispatch(Process):
         ]
 
     def parts_to_numbers(self, parent, parts):
-        parts = [ part[len(parent):] for part in parts ]
+        parts = [ str(tools.partnumber(parent, part)) for part in parts ]
         return ",".join( parts ) if len(parts) else "-"
 
     def update_gui_status(self, parent):
