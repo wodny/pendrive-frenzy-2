@@ -64,7 +64,10 @@ class Dispatch(Process):
 
         if parent in self.drive_statuses and \
            self.drive_statuses[parent] == DriveStatus.DRIVE_WAITFORPT:
-            summary = "Waiting for MBR..."
+            if len(failed):
+                summary = "Failed creating MBR."
+            else:
+                summary = "Waiting for MBR..."
         else:
             failed_text = ""
             if failed:

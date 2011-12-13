@@ -35,7 +35,10 @@ class StatusUpdate(DataWriterEvent):
         # TODO: Probably we should catch sth if someone removes a drive in progress
         if self.partition:
             dispatch.drive_partitions[self.parent][self.partition] = self.status_code
-            dispatch.update_gui_status(self.parent)
+        else:
+            for p in dispatch.drive_partitions[self.parent]:
+                dispatch.drive_partitions[self.parent][p] = self.status_code
+        dispatch.update_gui_status(self.parent)
         dispatch.updates_in.put(
             gui_updates.StatusBarUpdate(self.status_text)
         )

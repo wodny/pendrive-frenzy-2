@@ -26,6 +26,7 @@ from datawriter_events import StatusUpdate
 from dbus_tools import DBusTools
 from dbus_virtevents import PartitionsCreated
 
+import dbus
 import random
 
 class MBRWriter:
@@ -37,7 +38,25 @@ class MBRWriter:
         self.tools = DBusTools()
 
     def run(self):
-        time.sleep(2)
+        self.events_in.put(StatusUpdate(
+                                      self.drive,
+                                      None,
+                                      None,
+                                      _("Creating MBR for {0}...".format(self.drive))
+                                     ))
+        try:
+            device = self.tools.get_device(self.drive)
+            device.PartitionTableCreate("mbr", [], dbus_interface = 'org.freedesktop.UDisks.Device')
+
+        except dbus.DBusException:
+            self.events_in.put(StatusUpdate(
+                                          self.drive,
+                                          None,
+                                          PartitionStatus.FAILED,
+                                          _("Error while creating MBR on {0}!".format(self.drive))
+                                         ))
+            return
+
         self.events_in.put(PartitionsCreated(self.drive))
         self.events_in.put(StatusUpdate(
                                       self.drive,
