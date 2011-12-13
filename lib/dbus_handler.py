@@ -58,7 +58,7 @@ class DBusHandler:
             port = self.tools.get_port(path)
             self.events_in.put(DriveAdded(path, port))
         if member == "DeviceAdded" and self.tools.is_partition(path):
-            self.events_in.put(PartitionAdded(path, self.tools.get_parent(path)))
+            self.events_in.put(PartitionAdded(self.tools.get_parent(path), path))
         if member == "DeviceRemoved":
             self.events_in.put(DeviceRemoved(path))
 

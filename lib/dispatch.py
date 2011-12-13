@@ -61,13 +61,17 @@ class Dispatch(Process):
         done = self.get_partitions_by_status(parent, PartitionStatus.DONE)
         failed = self.get_partitions_by_status(parent, PartitionStatus.FAILED)
 
-        summary = "{0} → {1} → {2} → {3}; failed: {4}".format(
-            self.parts_to_numbers(parent, awaited),
-            self.parts_to_numbers(parent, available),
-            self.parts_to_numbers(parent, in_progress),
-            self.parts_to_numbers(parent, done),
-            self.parts_to_numbers(parent, failed)
-        )
+        if parent in self.drive_statuses and \
+           self.drive_statuses[parent] == DriveStatus.DRIVE_WAITFORPT:
+            summary = "Waiting for MBR..."
+        else:
+            summary = "{0} → {1} → {2} → {3}; failed: {4}".format(
+                self.parts_to_numbers(parent, awaited),
+                self.parts_to_numbers(parent, available),
+                self.parts_to_numbers(parent, in_progress),
+                self.parts_to_numbers(parent, done),
+                self.parts_to_numbers(parent, failed)
+            )
 
         drive_status = DriveStatus.DRIVE_NEW
         if len(awaited):
@@ -91,6 +95,42 @@ class Dispatch(Process):
             )
         )
 
+    def account_drive_added(self, drive):
+        print(_("New drive: {0}").format(drive))
+        if self.writing and self.config:
+            self.drive_partitions[drive] = dict(
+                (   [
+                        "{0}{1}".format(drive, p),
+                        PartitionStatus.AWAITED
+                    ]
+                    for p in self.config.partitions
+                )
+            )
+            return True
+        return False
+
+
+    def account_partition_added(self, accepttype, parent, part):
+        print(_("New partition: {0}").format(part))
+        if part in self.drive_statuses:
+            print("DRIVE STATUS (PADD): {0}".format(self.drive_statuses[self.path]))
+        if    self.writing \
+          and self.config \
+          and parent in self.drive_statuses \
+          and self.drive_statuses[parent] == accepttype:
+            if part not in self.drive_partitions[parent]:
+                self.drive_partitions[parent][part] = PartitionStatus.IGNORED
+                return
+            if self.drive_partitions[parent][part] == PartitionStatus.IGNORED:
+                return
+            self.drive_partitions[parent][part] = PartitionStatus.AVAILABLE
+            awaited = \
+                self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
+
+            return True if len(awaited) == 0 else False
+        return False
+
+        
 
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)

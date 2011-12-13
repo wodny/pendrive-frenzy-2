@@ -17,59 +17,45 @@
 
 
 
-from threading import Thread
 from multiprocessing import Process
 import signal
 from datawriter_events import DataWriterDone
 
-
-class DataWriterSpawner(Thread):
-    def __init__(self, writers_out, writers, events_in):
-        Thread.__init__(self)
-        self.writers_out = writers_out
-        self.writers = writers
-        self.events_in = events_in
-
-    def new_datawriter(self, writer_req):
-        dw = DataWriterLauncher(self.events_in, writer_req.destination, writer_req.source)
-        self.writers[writer_req.destination] = dw
-        dw.start()
-
-    def del_datawriter(self, writer_req):
-        del self.writers[writer_req.destination]
-
-    def run(self):
-        writer_req = self.writers_out.get()
-        while writer_req:
-            if writer_req.remove:
-                if writer_req.destination in self.writers:
-                    self.del_datawriter(writer_req)
-                    print("Removed writer for {0}".format(writer_req.destination))
-            else:
-                if writer_req.destination in self.writers:
-                    print("Already writing this destination")
-                else:
-                    print("New writer for {0}".format(writer_req.destination))
-                    self.new_datawriter(writer_req)
-            writer_req = self.writers_out.get()
-        print("DataWriter spawner exiting...")
-        self.writers_out.close()
-        self.writers_out.join_thread()
-
-
-
 class DataWriterLauncher(Process):
-    def __init__(self, events_in, destination, source):
+    def __init__(self, events_in, request):
         Process.__init__(self)
         self.events_in = events_in
-        self.destination = destination
-        self.source = source
+        self.request = request
 
-    def run(self):
-        from datawriter import DataWriter
+    def prerun(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
-        w = DataWriter(self.events_in, self.destination, self.source)
-        w.run()
-        self.events_in.put(DataWriterDone(self.destination, self.source, True))
+
+    def postrun(self):
         self.events_in.close()
         self.events_in.join_thread()
+
+
+class MBRWriterLauncher(DataWriterLauncher):
+    def __init__(self, events_in, request):
+        DataWriterLauncher.__init__(self, events_in, request)
+
+    def run(self):
+        self.prerun()
+        from datawriter import MBRWriter
+        w = MBRWriter(self.events_in, self.request)
+        w.run()
+        self.events_in.put(DataWriterDone(self.request.device))
+        self.postrun()
+
+
+class PartitionWriterLauncher(DataWriterLauncher):
+    def __init__(self, events_in, request):
+        DataWriterLauncher.__init__(self, events_in, request)
+
+    def run(self):
+        self.prerun()
+        from datawriter import PartitionWriter
+        #w = PartitionWriter(self.events_in, self.request)
+        #w.run()
+        self.events_in.put(DataWriterDone(self.request.part))
+        self.postrun()

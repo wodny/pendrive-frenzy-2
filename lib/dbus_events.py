@@ -18,69 +18,51 @@
 
 
 import gui_updates
-from datawriter_events import DataWriterRequest
+from datawriter_removal import DataWriterRemoval
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
+from dbus_tools import DBusTools
+from datawriter_requests import PartitionWriterRequest, MBRWriterRequest
 
 class DBusEvent:
     pass
 
 class DriveAdded(DBusEvent):
-    def __init__(self, path, port):
-        self.path = path
+    def __init__(self, drive, port):
+        self.drive = drive
         self.port = port
 
     def handle(self, dispatch):
-        print(_("New drive: {0}").format(self.path))
-        if dispatch.writing and dispatch.config:
-            dispatch.drive_partitions[self.path] = dict(
-                (   [
-                        "{0}{1}".format(self.path, p),
-                        PartitionStatus.AWAITED
-                    ]
-                    for p in dispatch.config.partitions
-                )
-            )
+        added = dispatch.account_drive_added(self.drive)
+        if added:
             if dispatch.config.mode == "create-mbr":
-                dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_WAITFORPT
-                # PT Creation here
+                dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_WAITFORPT
+                dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config.partspec))
             else:
-                dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_NEW
-        if self.path in dispatch.drive_statuses:
-            print("DRIVE STATUS (ADD): {0}".format(dispatch.drive_statuses[self.path]))
-        dispatch.updates_in.put(gui_updates.DriveAdded(self.path, self.port))
-        dispatch.update_gui_status(self.path)
+                dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
+        if self.drive in dispatch.drive_statuses:
+            print("DRIVE STATUS (ADD): {0}".format(dispatch.drive_statuses[self.drive]))
+        dispatch.updates_in.put(gui_updates.DriveAdded(self.drive, self.port))
+        dispatch.update_gui_status(self.drive)
+
 
 
 class PartitionAdded(DBusEvent):
-    def __init__(self, path, parent):
-        self.path = path
+    def __init__(self, parent, part):
         self.parent = parent
+        self.part = part
 
     def handle(self, dispatch):
-        print(_("New partition: {0}").format(self.path))
-        if self.path in dispatch.drive_statuses:
-            print("DRIVE STATUS (PADD): {0}".format(dispatch.drive_statuses[self.path]))
-        if    dispatch.writing \
-          and dispatch.config \
-          and self.parent in dispatch.drive_statuses \
-          and dispatch.drive_statuses[self.parent] == DriveStatus.DRIVE_NEW:
-            if self.path not in dispatch.drive_partitions[self.parent]:
-                dispatch.drive_partitions[self.parent][self.path] = PartitionStatus.IGNORED
-                return
-            if dispatch.drive_partitions[self.parent][self.path] == PartitionStatus.IGNORED:
-                return
-            dispatch.drive_partitions[self.parent][self.path] = PartitionStatus.AVAILABLE
-            awaited = \
-                dispatch.get_partitions_by_status(self.parent, PartitionStatus.AWAITED)
+        complete = dispatch.account_partition_added(DriveStatus.DRIVE_NEW, self.parent, self.part)
+        if complete:
+            available = \
+                dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)
+            for p in available:
+                dispatch.drive_partitions[self.parent][p] = PartitionStatus.IN_PROGRESS
+                # TODO: reenable
+                #dispatch.writers_in.put(DataWriterRequest(part, "le source"))
+        dispatch.update_gui_status(self.parent)
 
-            if len(awaited) == 0:
-                available = \
-                    dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)
-                for part in available:
-                    dispatch.drive_partitions[self.parent][part] = PartitionStatus.IN_PROGRESS
-                    dispatch.writers_in.put(DataWriterRequest(part, "le source"))
-            dispatch.update_gui_status(self.parent)
 
 class DeviceRemoved(DBusEvent):
     def __init__(self, path):
@@ -96,19 +78,8 @@ class DeviceRemoved(DBusEvent):
         except KeyError:
             pass
         dispatch.updates_in.put(gui_updates.DeviceRemoved(self.path))
-        dispatch.writers_in.put(DataWriterRequest(self.path, "le source", True))
-
-class PartitionTableCreated(DBusEvent):
-    def __init__(self, path):
-        self.path = path
-
-    def handle(self, dispatch):
-        print(_("Partition table created: {0}").format(self.path))
-        # TODO
-        # PT
-        # Set part. statuses as available/in progress
-        dispatch.drive_statuses[self.path] = DriveStatus.DRIVE_PTDONE
-        # FS creation here and worker right after that
+        # TODO: reenable
+        #dispatch.writers_in.put(DataWriterRequest(self.path, "le source", True))
 
 class Dummy(DBusEvent):
     def __init__(self, text):

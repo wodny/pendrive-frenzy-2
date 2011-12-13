@@ -24,10 +24,27 @@ import time
 from partition_statuses import PartitionStatus
 from datawriter_events import StatusUpdate
 from dbus_tools import DBusTools
+from dbus_virtevents import PartitionsCreated
 
 import random
 
-class DataWriter:
+class MBRWriter:
+    def __init__(self, events_in, request):
+        self.events_in = events_in
+        self.request = request
+        self.drive = request.device
+
+    def run(self):
+        time.sleep(2)
+        self.events_in.put(PartitionsCreated(self.drive))
+        self.events_in.put(StatusUpdate(
+                                      self.drive,
+                                      None,
+                                      None,
+                                      _("MBR for {0} created.".format(self.request.device))
+                                     ))
+
+class PartitionWriter:
     def __init__(self, events_in, partition, source):
         self.partition = partition
         self.source = source

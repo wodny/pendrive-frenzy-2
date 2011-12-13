@@ -71,6 +71,10 @@ class DBusTools:
                                         timeout = 300
                                        )
 
+    def create_mbr(self, path):
+        device = self.get_device(path)
+        device.PartitionTableCreate("mbr", [], dbus_interface = 'org.freedesktop.UDisks.Device')
+
     def get_conn_interface(self, path):
         device = self.get_device(path)
         return self.get_prop(device, "DriveConnectionInterface")

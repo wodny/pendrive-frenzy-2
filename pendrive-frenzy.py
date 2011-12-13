@@ -34,7 +34,7 @@ from lib.dispatch import Dispatch
 from lib.dbus_handler_launcher import DBusHandlerLauncher
 from lib.gui_launcher import GUILauncher
 from lib.gui_updates import Quit
-from lib.datawriter_launcher import DataWriterSpawner
+from lib.datawriter_spawner import DataWriterSpawner
 from lib.config_events import ReadConfig
 
 

@@ -1,5 +1,5 @@
 import ConfigParser
-from lib.config import Config
+from lib.config import Config, ConfigException
 import gui_updates
 
 class ConfigEvent:
@@ -15,10 +15,10 @@ class ReadConfig(ConfigEvent):
             loaded_msg = _("Configuration loaded ({0}).".format(self.path))
             print(loaded_msg)
             dispatch.config = config
-            description = config.get_description()
+            description = config.description
             dispatch.updates_in.put(gui_updates.StatusBarUpdate(loaded_msg))
             dispatch.updates_in.put(gui_updates.InfoBarUpdate(description))
-        except (ConfigParser.Error, ValueError) as e:
+        except (ConfigParser.Error, ValueError, ConfigException) as e:
             print(_("Configuration parsing error."))
             print(e)
             dispatch.updates_in.put(gui_updates.StatusBarUpdate(_("Configuration parsing error.")))

@@ -19,13 +19,7 @@
 
 import gui_updates
 from drive_statuses import DriveStatus
-
-
-class DataWriterRequest:
-    def __init__(self, destination, source, remove = False):
-        self.destination = destination
-        self.source = source
-        self.remove = remove
+from datawriter_removal import DataWriterRemoval
 
 class DataWriterEvent:
     pass
@@ -39,17 +33,16 @@ class StatusUpdate(DataWriterEvent):
 
     def handle(self, dispatch):
         # TODO: Probably we should catch sth if someone removes a drive in progress
-        dispatch.drive_partitions[self.parent][self.partition] = self.status_code
-        dispatch.update_gui_status(self.parent)
+        if self.partition:
+            dispatch.drive_partitions[self.parent][self.partition] = self.status_code
+            dispatch.update_gui_status(self.parent)
         dispatch.updates_in.put(
             gui_updates.StatusBarUpdate(self.status_text)
         )
         
 class DataWriterDone(DataWriterEvent):
-    def __init__(self, destination, source, remove):
-        self.destination = destination
-        self.source = source
-        self.remove = remove
+    def __init__(self, device):
+        self.device = device
 
     def handle(self, dispatch):
-        dispatch.writers_in.put(DataWriterRequest(self.destination, self.source, True))
+        dispatch.writers_in.put(DataWriterRemoval(self.device))
