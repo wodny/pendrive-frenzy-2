@@ -55,24 +55,84 @@ class Dispatch(Process):
         parts = [ str(tools.partnumber(parent, part)) for part in parts ]
         return ",".join( parts ) if len(parts) else "-"
 
-    def update_gui_status(self, parent):
-        awaited = self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
-        available = self.get_partitions_by_status(parent, PartitionStatus.AVAILABLE)
-        in_progress = self.get_partitions_by_status(parent, PartitionStatus.IN_PROGRESS)
-        done = self.get_partitions_by_status(parent, PartitionStatus.DONE)
-        failed = self.get_partitions_by_status(parent, PartitionStatus.FAILED)
+    def __check_partitions(self, parent):
+            awaited = self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
+            available = self.get_partitions_by_status(parent, PartitionStatus.AVAILABLE)
+            in_progress = self.get_partitions_by_status(parent, PartitionStatus.IN_PROGRESS)
+            done = self.get_partitions_by_status(parent, PartitionStatus.DONE)
+            failed = self.get_partitions_by_status(parent, PartitionStatus.FAILED)
 
-        if parent in self.drive_statuses and \
-           self.drive_statuses[parent] == DriveStatus.DRIVE_WAITFORPT:
             if len(failed):
-                summary = "Failed creating MBR."
-            else:
-                summary = "Waiting for MBR..."
-        else:
+                return (DriveStatus.DRIVE_PARTERROR,
+                        awaited,
+                        available,
+                        in_progress,
+                        done,
+                        failed
+                       )
+
+            if len(awaited):
+                return (DriveStatus.DRIVE_HASPT,
+                        awaited,
+                        available,
+                        in_progress,
+                        done,
+                        failed
+                       )
+
+            if len(available) or len(in_progress):
+                return (DriveStatus.DRIVE_INPROGRESS,
+                        awaited,
+                        available,
+                        in_progress,
+                        done,
+                        failed
+                       )
+
+            if \
+                len(awaited) == 0 and \
+                len(available) == 0 and \
+                len(in_progress) == 0 and \
+                len(done):
+                    return (DriveStatus.DRIVE_DONE,
+                            awaited,
+                            available,
+                            in_progress,
+                            done,
+                            failed
+                           )
+
+            return (DriveStatus.DRIVE_NEW,
+                    awaited,
+                    available,
+                    in_progress,
+                    done,
+                    failed
+                   )
+
+
+    def update_status(self, parent, status_text):
+        if parent not in self.drive_statuses:
+            return
+
+        drive_status = self.drive_statuses[parent]
+        (parts_status, awaited, available, in_progress, done, failed) = \
+            self.__check_partitions(parent)
+        if not (drive_status & DriveStatus.DRIVE_PT):
+            self.drive_statuses[parent] = parts_status
+
+        drive_status = self.drive_statuses[parent]
+
+        if drive_status == DriveStatus.DRIVE_PTERROR:
+            drive_text = "Failed creating MBR."
+        if drive_status == DriveStatus.DRIVE_WAITFORPT:
+            drive_text = "Waiting for MBR..."
+
+        if not (drive_status & DriveStatus.DRIVE_PT):
             failed_text = ""
             if failed:
                 failed_text = "; failed: {0}".format(self.parts_to_numbers(parent, failed))
-            summary = "{0} → {1} → {2} → {3}{4}".format(
+            drive_text = "{0} → {1} → {2} → {3}{4}".format(
                 self.parts_to_numbers(parent, awaited),
                 self.parts_to_numbers(parent, available),
                 self.parts_to_numbers(parent, in_progress),
@@ -80,27 +140,20 @@ class Dispatch(Process):
                 failed_text
             )
 
-        drive_status = DriveStatus.DRIVE_NEW
-        if len(awaited):
-            drive_status = DriveStatus.DRIVE_SELECTED
-        if len(available) or len(in_progress):
-            drive_status = DriveStatus.DRIVE_INPROGRESS 
-        if \
-            len(awaited) == 0 and \
-            len(available) == 0 and \
-            len(in_progress) == 0 and \
-            len(done):
-                drive_status = DriveStatus.DRIVE_DONE 
-        if len(failed):
-            drive_status = DriveStatus.DRIVE_ERROR
 
         self.updates_in.put(
             gui_updates.StatusUpdate(
                 parent,
                 drive_status,
-                summary
+                drive_text
             )
         )
+
+        if status_text is not None:
+            self.updates_in.put(
+                gui_updates.StatusBarUpdate(status_text)
+            )
+ 
 
     def account_drive_added(self, drive):
         print(_("New drive: {0}").format(drive))
@@ -124,7 +177,7 @@ class Dispatch(Process):
         if    self.writing \
           and self.config \
           and parent in self.drive_statuses \
-          and self.drive_statuses[parent] == accepttype:
+          and (accepttype is None or self.drive_statuses[parent] == accepttype):
             if part not in self.drive_partitions[parent]:
                 self.drive_partitions[parent][part] = PartitionStatus.IGNORED
                 return

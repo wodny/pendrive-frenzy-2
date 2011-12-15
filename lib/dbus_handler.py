@@ -62,7 +62,7 @@ class DBusHandler:
         if member == "DeviceRemoved":
             self.events_in.put(DeviceRemoved(path))
 
-        if member == "DeviceJobChanged":
-            (in_progress, job_id, uid, cancellable, percentage) = args[1:]
-            if job_id == "PartitionTableCreate":
-                self.events_in.put(PartitionTableCreated(path))
+        #if member == "DeviceJobChanged":
+        #    (in_progress, job_id, uid, cancellable, percentage) = args[1:]
+        #    if job_id == "PartitionTableCreate":
+        #        self.events_in.put(PartitionTableCreated(path))

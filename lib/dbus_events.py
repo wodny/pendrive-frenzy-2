@@ -44,7 +44,7 @@ class DriveAdded(DBusEvent):
         if self.drive in dispatch.drive_statuses:
             print("DRIVE STATUS (ADD): {0}".format(dispatch.drive_statuses[self.drive]))
         dispatch.updates_in.put(gui_updates.DriveAdded(self.drive, self.port))
-        dispatch.update_gui_status(self.drive)
+        dispatch.update_status(self.drive, "New drive {0}.".format(self.drive))
 
 
 
@@ -62,7 +62,7 @@ class PartitionAdded(DBusEvent):
                 dispatch.drive_partitions[self.parent][p] = PartitionStatus.IN_PROGRESS
                 partspec = dispatch.config.partspecs[tools.partnumber(self.parent, p)]
                 dispatch.writers_in.put(PartitionWriterRequest(self.parent, p, partspec))
-        dispatch.update_gui_status(self.parent)
+        dispatch.update_status(self.parent, "New partition {0}.".format(self.part))
 
 
 class DeviceRemoved(DBusEvent):

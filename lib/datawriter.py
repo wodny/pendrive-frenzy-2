@@ -21,10 +21,11 @@
 import subprocess
 import time
 
+from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 from datawriter_events import StatusUpdate
 from dbus_tools import DBusTools
-from dbus_virtevents import PartitionsCreated
+from dbus_virtevents import MBRCreated, FSCreated
 
 import dbus
 import random
@@ -38,12 +39,19 @@ class MBRWriter:
         self.tools = DBusTools()
 
     def run(self):
+
+        #time.sleep(1)
+
         self.events_in.put(StatusUpdate(
                                       self.drive,
                                       None,
                                       None,
+                                      None,
                                       _("Creating MBR for {0}...".format(self.drive))
                                      ))
+
+        #time.sleep(1)
+
         try:
             device = self.tools.get_device(self.drive)
             device.PartitionTableCreate("mbr", [], dbus_interface = 'org.freedesktop.UDisks.Device')
@@ -51,19 +59,45 @@ class MBRWriter:
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.drive,
+                                          DriveStatus.DRIVE_PTERROR,
                                           None,
-                                          PartitionStatus.FAILED,
+                                          None,
                                           _("Error while creating MBR on {0}!".format(self.drive))
                                          ))
             return
 
-        self.events_in.put(PartitionsCreated(self.drive))
+        #time.sleep(1)
+
+
+        return MBRCreated(self.drive)
+
+
+
+class PartitionCreator:
+    def __init__(self, events_in, request):
+        self.events_in = events_in
+        self.request = request
+
+        self.parent = request.parent
+        self.part = request.part
+        self.partspec = request.partspec
+
+        self.tools = DBusTools()
+
+    def run(self):
         self.events_in.put(StatusUpdate(
-                                      self.drive,
+                                      self.parent,
                                       None,
-                                      None,
-                                      _("MBR for {0} created.".format(self.drive))
+                                      self.part,
+                                      PartitionStatus.IN_PROGRESS,
+                                      _("Creating partition and FS for {0}...".format(self.part))
                                      ))
+
+        time.sleep(1)
+
+        return FSCreated(self.parent, self.part)
+
+
 
 class PartitionWriter:
     def __init__(self, events_in, request):
@@ -86,6 +120,7 @@ class PartitionWriter:
 
         self.events_in.put(StatusUpdate(
                                       self.parent,
+                                      None,
                                       self.part,
                                       PartitionStatus.IN_PROGRESS,
                                       _("Mounting {0}...".format(self.part))
@@ -96,6 +131,7 @@ class PartitionWriter:
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.parent,
+                                          None,
                                           self.part,
                                           PartitionStatus.FAILED,
                                           _("Error while mounting {0}!".format(self.part))
@@ -105,6 +141,7 @@ class PartitionWriter:
         time.sleep(random.randint(1,5))
         self.events_in.put(StatusUpdate(
                                       self.parent,
+                                      None,
                                       self.part,
                                       PartitionStatus.IN_PROGRESS,
                                       _("Copying to {0}...".format(self.part))
@@ -122,6 +159,7 @@ class PartitionWriter:
         #time.sleep(random.randint(1,5))
         self.events_in.put(StatusUpdate(
                                       self.parent,
+                                      None,
                                       self.part,
                                       PartitionStatus.IN_PROGRESS,
                                       _("Unmounting {0}...".format(self.part))
@@ -134,6 +172,7 @@ class PartitionWriter:
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.parent,
+                                          None,
                                           self.part,
                                           PartitionStatus.FAILED,
                                           _("Error while unmounting {0}!".format(self.part))
@@ -146,6 +185,7 @@ class PartitionWriter:
             #time.sleep(random.randint(1,5))
             self.events_in.put(StatusUpdate(
                                           self.parent,
+                                          None,
                                           self.part,
                                           PartitionStatus.DONE,
                                           _("Done {0}.".format(self.part))
@@ -153,6 +193,7 @@ class PartitionWriter:
         else:
             self.events_in.put(StatusUpdate(
                                           self.parent,
+                                          None,
                                           self.part,
                                           PartitionStatus.FAILED,
                                           _("Error while copying {0}!".format(self.part))
@@ -161,6 +202,7 @@ class PartitionWriter:
         if random.randint(1,3) < 2:
             self.events_in.put(StatusUpdate(
                                           self.parent,
+                                          None,
                                           self.part,
                                           PartitionStatus.FAILED,
                                           _("Error while copying {0}!".format(self.part))

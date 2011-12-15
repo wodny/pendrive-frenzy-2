@@ -30,7 +30,10 @@ class DataWriterLauncher(Process):
     def prerun(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
 
-    def postrun(self):
+    def postrun(self, writer_event, done_event):
+        self.events_in.put(done_event)
+        if writer_event is not None:
+            self.events_in.put(writer_event)
         self.events_in.close()
         self.events_in.join_thread()
 
@@ -43,9 +46,8 @@ class MBRWriterLauncher(DataWriterLauncher):
         self.prerun()
         from datawriter import MBRWriter
         w = MBRWriter(self.events_in, self.request)
-        w.run()
-        self.events_in.put(DataWriterDone(self.request.drive))
-        self.postrun()
+        writer_event = w.run()
+        self.postrun(writer_event, DataWriterDone(self.request.drive))
 
 
 class PartitionWriterLauncher(DataWriterLauncher):
@@ -56,6 +58,17 @@ class PartitionWriterLauncher(DataWriterLauncher):
         self.prerun()
         from datawriter import PartitionWriter
         w = PartitionWriter(self.events_in, self.request)
-        w.run()
-        self.events_in.put(DataWriterDone(self.request.part))
-        self.postrun()
+        writer_event = w.run()
+        self.postrun(writer_event, DataWriterDone(self.request.part))
+
+
+class PartitionCreatorLauncher(DataWriterLauncher):
+    def __init__(self, events_in, request):
+        DataWriterLauncher.__init__(self, events_in, request)
+
+    def run(self):
+        self.prerun()
+        from datawriter import PartitionCreator
+        w = PartitionCreator(self.events_in, self.request)
+        writer_event = w.run()
+        self.postrun(writer_event, DataWriterDone(self.request.part))

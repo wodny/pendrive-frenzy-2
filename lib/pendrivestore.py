@@ -28,10 +28,11 @@ class PendriveStore:
 
     code_to_color = {
                      DriveStatus.DRIVE_NEW: COLOR_NEW,
-                     DriveStatus.DRIVE_SELECTED: COLOR_INPROGRESS,
+                     DriveStatus.DRIVE_HASPT: COLOR_INPROGRESS,
                      DriveStatus.DRIVE_INPROGRESS: COLOR_INPROGRESS,
+                     DriveStatus.DRIVE_WAITFORPT: COLOR_INPROGRESS,
+                     DriveStatus.DRIVE_PTERROR: COLOR_INPROGRESS,
                      DriveStatus.DRIVE_DONE: COLOR_DONE,
-                     DriveStatus.DRIVE_ERROR: COLOR_ERROR
                     }
 
     COLUMN_STATUSTEXT = 2
@@ -52,7 +53,11 @@ class PendriveStore:
         return self.store.get(iter, PendriveStore.COLUMN_STATUSCODE, PendriveStore.COLUMN_STATUSTEXT)
 
     def set_status(self, iter, code, text):
-        color = PendriveStore.code_to_color[code]
+        try:
+            color = PendriveStore.code_to_color[code]
+        except KeyError:
+            color = PendriveStore.COLOR_ERROR if code & DriveStatus.DRIVE_ERROR else PendriveStore.COLOR_NEW
+
         self.store.set(
                        iter,
                        PendriveStore.COLUMN_STATUSCODE, code,

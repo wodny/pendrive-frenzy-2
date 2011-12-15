@@ -25,23 +25,20 @@ class DataWriterEvent:
     pass
 
 class StatusUpdate(DataWriterEvent):
-    def __init__(self, parent, partition, status_code, status_text):
+    def __init__(self, parent, parent_status, part, part_status, status_text):
         self.parent = parent
-        self.partition = partition
-        self.status_code = status_code
+        self.parent_status = parent_status
+        self.part = part
+        self.part_status = part_status
         self.status_text = status_text
 
     def handle(self, dispatch):
         # TODO: Probably we should catch sth if someone removes a drive in progress
-        if self.partition:
-            dispatch.drive_partitions[self.parent][self.partition] = self.status_code
-        else:
-            for p in dispatch.drive_partitions[self.parent]:
-                dispatch.drive_partitions[self.parent][p] = self.status_code
-        dispatch.update_gui_status(self.parent)
-        dispatch.updates_in.put(
-            gui_updates.StatusBarUpdate(self.status_text)
-        )
+        if self.parent and self.parent_status is not None:
+            dispatch.drive_statuses[self.parent] = self.parent_status
+        if self.part and self.part_status is not None:
+            dispatch.drive_partitions[self.parent][self.part] = self.part_status
+        dispatch.update_status(self.parent, self.status_text)
         
 class DataWriterDone(DataWriterEvent):
     def __init__(self, device):
