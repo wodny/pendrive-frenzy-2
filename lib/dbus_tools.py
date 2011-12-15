@@ -17,6 +17,7 @@
 
 
 import dbus
+import parted
 
 class DBusTools:
     def __init__(self):
@@ -78,3 +79,39 @@ class DBusTools:
     def get_conn_interface(self, path):
         device = self.get_device(path)
         return self.get_prop(device, "DriveConnectionInterface")
+
+    def floor_to_chunk(self, size, chunksize):
+        return size - size % chunksize
+    
+    def get_chunk_size(self, path):
+        devfile = self.get_device_filename(path)
+        pdevice = parted.device.Device(devfile)
+        (cylinders, heads, sectors) = pdevice.hardwareGeometry
+        return heads * sectors * pdevice.physicalSectorSize
+
+    def get_device_filename(self, path):
+        device = self.get_device(path)
+        return self.get_prop(device, "DeviceFile")
+
+    def create_partition(self, drive, partspec, start):
+        chunk_size = self.get_chunk_size(drive)
+        start = self.floor_to_chunk(start, chunk_size)
+        size = self.floor_to_chunk(partspec["size"] + chunk_size, chunk_size)
+        flags = ["boot"] if partspec["boot"] else []
+        options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
+
+        device = self.get_device(drive)
+        partition = device.PartitionCreate(
+                                           start,
+                                           size,
+                                           partspec["type"],
+                                           "",
+                                           flags,
+                                           [],
+                                           partspec["fstype"],
+                                           options,
+                                           dbus_interface = 'org.freedesktop.UDisks.Device',
+                                           timeout = 300
+                                          )
+
+        return start + size

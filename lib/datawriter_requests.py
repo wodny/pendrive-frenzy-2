@@ -15,26 +15,11 @@
 #    You should have received a copy of the GNU General Public License
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
-from datawriter_launcher import MBRWriterLauncher, PartitionWriterLauncher, PartitionCreatorLauncher
+from datawriter_launcher import MBRWriterLauncher, PartitionWriterLauncher
 
 class DataWriterRequest:
     pass
 
-class PartitionCreatorRequest(DataWriterRequest):
-    def __init__(self, parent, part, partspec):
-        self.parent = parent
-        self.part = part
-        self.partspec = partspec
-
-    def handle(self, writers, events_in):
-        print("PARTITION CREATOR REQUEST {0} {1} {2}".format(self.parent, self.part, self.partspec))
-        if self.part in writers:
-            print("Already have writer for this part.")
-            return
-        print("Spawning creator")
-        l = PartitionCreatorLauncher(events_in, self)
-        writers[self.part] = l
-        l.start()
 
 class PartitionWriterRequest(DataWriterRequest):
     def __init__(self, parent, part, partspec):

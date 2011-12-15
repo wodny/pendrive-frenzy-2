@@ -19,13 +19,15 @@ class Config:
         if self.mode not in ("copy-only", "create-mbr"):
             raise ConfigException("Invalid mode")
 
-        self.partitions = set( int(part) for part in self.parser.get("general", "partitions").split(',') )
+        self.partitions = [ int(part) for part in self.parser.get("general", "partitions").split(',') ]
+        self.partitions.sort()
 
         self.partspecs = dict()
 
         for p in self.partitions:
             section = "partition_{0}".format(p)
             self.partspecs[p] = dict()
+            # TODO: start ignored
             self.partspecs[p]["start"] = self.parser.getint(section, "start")
             self.partspecs[p]["size"] = self.parser.getint(section, "size")
             self.partspecs[p]["type"] = self.parser.get(section, "type")

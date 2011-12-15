@@ -25,7 +25,7 @@ from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 from datawriter_events import StatusUpdate
 from dbus_tools import DBusTools
-from dbus_virtevents import MBRCreated, FSCreated
+from dbus_virtevents import MBRCreated, PartitionsCreated, FSCreated
 
 import dbus
 import random
@@ -54,7 +54,7 @@ class MBRWriter:
 
         try:
             device = self.tools.get_device(self.drive)
-            device.PartitionTableCreate("mbr", [], dbus_interface = 'org.freedesktop.UDisks.Device')
+            self.tools.create_mbr(self.drive)
 
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
@@ -66,36 +66,18 @@ class MBRWriter:
                                          ))
             return
 
+        self.events_in.put(MBRCreated(self.drive))
+
         #time.sleep(1)
 
+        prev_start = 0
+        for p in self.request.partspecs:
+            prev_start = self.tools.create_partition(self.drive, self.request.partspecs[p], prev_start)
+            self.events_in.put(FSCreated(self.drive, "{0}{1}".format(self.drive, p)))
 
-        return MBRCreated(self.drive)
 
+        return PartitionsCreated(self.drive)
 
-
-class PartitionCreator:
-    def __init__(self, events_in, request):
-        self.events_in = events_in
-        self.request = request
-
-        self.parent = request.parent
-        self.part = request.part
-        self.partspec = request.partspec
-
-        self.tools = DBusTools()
-
-    def run(self):
-        self.events_in.put(StatusUpdate(
-                                      self.parent,
-                                      None,
-                                      self.part,
-                                      PartitionStatus.IN_PROGRESS,
-                                      _("Creating partition and FS for {0}...".format(self.part))
-                                     ))
-
-        time.sleep(1)
-
-        return FSCreated(self.parent, self.part)
 
 
 
