@@ -18,6 +18,8 @@
 
 import dbus
 import parted
+import copy
+import math
 
 class DBusTools:
     def __init__(self):
@@ -82,25 +84,64 @@ class DBusTools:
 
     def floor_to_chunk(self, size, chunksize):
         return size - size % chunksize
-    
-    def get_chunk_size(self, path):
+
+    def ceil_to_chunk(self, size, chunksize):
+        return int(math.ceil(1.0 * size / chunksize) * chunksize)
+   
+    def get_geometry(self, path):
         devfile = self.get_device_filename(path)
         pdevice = parted.device.Device(devfile)
-        (cylinders, heads, sectors) = pdevice.hardwareGeometry
-        return heads * sectors * pdevice.physicalSectorSize
+        return pdevice.hardwareGeometry + ( pdevice.physicalSectorSize, )
+
+    def get_chunk_size(self, path):
+        (cylinders, heads, sectors, sectorsize) = self.get_geometry(path)
+        return heads * sectors * sectorsize
 
     def get_device_filename(self, path):
         device = self.get_device(path)
         return self.get_prop(device, "DeviceFile")
 
-    def create_partition(self, drive, partspec, start):
+    def adjust_partspecs_to_geometry(self, drive, partspecs):
+        chunksize = self.get_chunk_size(drive)
+        newspecs = copy.deepcopy(partspecs)
+
+        (cylinders, heads, sectors, sectorsize) = self.get_geometry(drive)
+        first_free = 1 * sectors
+
+        for i in newspecs:
+            part = newspecs[i]
+            start = part["start"]
+            start = self.floor_to_chunk(start, chunksize)
+            if start < first_free:
+                start = first_free
+
+            end = start + part["size"]
+            end = self.ceil_to_chunk(end, chunksize)
+
+            size = end - start
+
+            part["start"] = start
+            part["size"] = size
+
+            if int(part["type"], 16) == 0x05:
+                first_free = start + chunksize
+            else:
+                first_free = start + size
+
+        return newspecs
+
+    def create_partition(self, drive, partspec):
         chunk_size = self.get_chunk_size(drive)
-        start = self.floor_to_chunk(start, chunk_size)
-        size = self.floor_to_chunk(partspec["size"] + chunk_size, chunk_size)
+        start = partspec["start"]
+        size = partspec["size"]
         flags = ["boot"] if partspec["boot"] else []
         options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
 
         device = self.get_device(drive)
+
+        print("{0} -- {1}  ({2})".format(start, (start + size - 1), size))
+        print("{0} -- {1}  ({2})".format(start / 512, (start + size - 1) / 512, size / 512))
+
         partition = device.PartitionCreate(
                                            start,
                                            size,
@@ -113,5 +154,3 @@ class DBusTools:
                                            dbus_interface = 'org.freedesktop.UDisks.Device',
                                            timeout = 300
                                           )
-
-        return start + size
