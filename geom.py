@@ -4,6 +4,8 @@ import lib.dbus_tools
 import lib.config
 import sys
 import pprint
+import time
+import dbus
 
 drive = "/org/freedesktop/UDisks/devices/sdd"
 
@@ -17,4 +19,19 @@ print("NEW")
 pprint.pprint(n)
 
 for p in n:
-    prev_start = t.create_partition(drive, n[p])
+    done = False
+    tries = 0
+    while not done:
+        try:
+            part = t.create_partition(drive, n[p])
+            print(part)
+            done = True
+        except dbus.exceptions.DBusException, e:
+            raise e
+            #print(e)
+            #tries += 1
+            #if tries >= 5:
+            #    raise e
+            #time.sleep(3)
+
+#t.create_fs("/org/freedesktop/UDisks/devices/sdd1", n[1])

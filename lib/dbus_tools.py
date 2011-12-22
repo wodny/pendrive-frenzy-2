@@ -82,6 +82,10 @@ class DBusTools:
         device = self.get_device(path)
         return self.get_prop(device, "DriveConnectionInterface")
 
+    def get_device_size(self, path):
+        device = self.get_device(path)
+        return int(self.get_prop(device, "DeviceSize"))
+
     def floor_to_chunk(self, size, chunksize):
         return size - size % chunksize
 
@@ -105,6 +109,9 @@ class DBusTools:
         chunksize = self.get_chunk_size(drive)
         newspecs = copy.deepcopy(partspecs)
 
+        devsize = self.get_device_size(drive) 
+        maxend = self.floor_to_chunk(devsize - 10 * chunksize, chunksize)
+
         (cylinders, heads, sectors, sectorsize) = self.get_geometry(drive)
         first_free = 1 * sectors
 
@@ -117,6 +124,8 @@ class DBusTools:
 
             end = start + part["size"]
             end = self.ceil_to_chunk(end, chunksize)
+            if end > maxend:
+                end = maxend
 
             size = end - start
 
@@ -124,9 +133,26 @@ class DBusTools:
             part["size"] = size
 
             if int(part["type"], 16) == 0x05:
-                first_free = start + chunksize
+                first_free = start + sectors * 512
             else:
                 first_free = start + size
+
+        extended = None
+        lastpartend = None
+        for i in newspecs.keys():
+            part = newspecs[i]
+            if int(part["type"], 16) == 0x05:
+                if extended is None:
+                    extended = part
+                else:
+                    del newspecs[i]
+                continue
+            if extended is None:
+                continue
+            lastpartend = part["start"] + part["size"]
+
+        if extended is not None and lastpartend is not None:
+            extended["size"] = lastpartend - extended["start"]
 
         return newspecs
 
@@ -135,13 +161,13 @@ class DBusTools:
         start = partspec["start"]
         size = partspec["size"]
         flags = ["boot"] if partspec["boot"] else []
-        options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
 
         device = self.get_device(drive)
 
-        print("{0} -- {1}  ({2})".format(start, (start + size - 1), size))
-        print("{0} -- {1}  ({2})".format(start / 512, (start + size - 1) / 512, size / 512))
+        print("Bytes  : {0} -- {1}  ({2})".format(start, (start + size - 1), size))
+        print("Sectors: {0} -- {1}  ({2})".format(start / 512, (start + size - 1) / 512, size / 512))
 
+        #return
         partition = device.PartitionCreate(
                                            start,
                                            size,
@@ -149,8 +175,23 @@ class DBusTools:
                                            "",
                                            flags,
                                            [],
+                                           "",
+                                           [],
+                                           dbus_interface = 'org.freedesktop.UDisks.Device',
+                                           timeout = 300
+                                          )
+        return partition
+
+    def create_fs(self, device, partspec):
+        options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
+        device = self.get_device(device)
+
+        print("FS")
+
+        partition = device.FilesystemCreate(
                                            partspec["fstype"],
                                            options,
                                            dbus_interface = 'org.freedesktop.UDisks.Device',
                                            timeout = 300
                                           )
+
