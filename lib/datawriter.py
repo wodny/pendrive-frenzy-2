@@ -39,9 +39,7 @@ class MBRWriter:
         self.tools = DBusTools()
 
     def run(self):
-
-        #time.sleep(1)
-
+        # Creating MBR...
         self.events_in.put(StatusUpdate(
                                       self.drive,
                                       None,
@@ -50,7 +48,6 @@ class MBRWriter:
                                       _("Creating MBR for {0}...".format(self.drive))
                                      ))
 
-        #time.sleep(1)
 
         try:
             device = self.tools.get_device(self.drive)
@@ -68,13 +65,46 @@ class MBRWriter:
 
         self.events_in.put(MBRCreated(self.drive))
 
-        #time.sleep(1)
 
-        prev_start = 0
-        for p in self.request.partspecs:
-            prev_start = self.tools.create_partition(self.drive, self.request.partspecs[p], prev_start)
-            self.events_in.put(FSCreated(self.drive, "{0}{1}".format(self.drive, p)))
+        # Adjusting partitions alignment...
+        adjusted_specs = self.tools.adjust_partspecs_to_geometry(self.drive, self.request.partspecs)
 
+        events = []
+
+        try:
+            for p in adjusted_specs:
+                # Create partition (via MBR)
+                part_path = self.tools.create_partition(self.drive, adjusted_specs[p])
+                # Create FS (if specified)
+                created = self.tools.create_fs(part_path, adjusted_specs[p])
+                if created:
+                    # FS created
+                    events.append(FSCreated(self.drive, "{0}{1}".format(self.drive, p)))
+                else:
+                    # Partition for which mkfs is omitted
+                    events.append(StatusUpdate(
+                                               self.drive,
+                                               None,
+                                               part_path,
+                                               PartitionStatus.DONE,
+                                               _("Done {0}.".format(part_path))
+                                 ))
+
+        except dbus.DBusException, e:
+            print(e)
+            self.events_in.put(StatusUpdate(
+                                          self.drive,
+                                          DriveStatus.DRIVE_PTERROR,
+                                          None,
+                                          None,
+                                          _("Error while creating partition {0} on {1}!".format(p, self.drive))
+                                         ))
+            return
+
+
+        # Signal all partitions have been created
+        for ev in events:
+            self.events_in.put(ev)
 
         return PartitionsCreated(self.drive)
 
@@ -93,13 +123,12 @@ class PartitionWriter:
         self.tools = DBusTools()
 
     def run(self):
-        random.seed()
+        # Overall status
         success = True
 
-        #queue = EventQueue.instance()
-        #dbus_handler = DBusHandler.instance()
-        #self.part = dbus_handler.get_parent(self.part)
 
+
+        # Mount...
         self.events_in.put(StatusUpdate(
                                       self.parent,
                                       None,
@@ -108,8 +137,7 @@ class PartitionWriter:
                                       _("Mounting {0}...".format(self.part))
                                      ))
         try:
-            #mountpartition = dbus_handler.mount(self.part)
-            pass
+            mountpoint = self.tools.mount(self.part)
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.parent,
@@ -120,7 +148,9 @@ class PartitionWriter:
                                          ))
             return
 
-        time.sleep(random.randint(1,5))
+
+
+        # Copying data...
         self.events_in.put(StatusUpdate(
                                       self.parent,
                                       None,
@@ -130,15 +160,24 @@ class PartitionWriter:
                                      ))
 
         try:
-            #subprocess.check_call(["rsync", "-rI", "--delete", "--", self.source, mountpartition])
-            pass
+            cmd = []
+            if self.partspec["method"] == "copy-files":
+                cmd = ["rsync", "-rI", "--delete", "--", self.partspec["path"], mountpoint]
+            if self.partspec["method"] == "copy-image":
+                cmd = ["dd",
+                       "if={0}".format(self.partspec["path"]),
+                       "of={0}".format(self.tools.get_device_filename(self.part))
+                      ]
+            print(cmd)
+            subprocess.check_call(cmd)
         except subprocess.CalledProcessError as e:
+            # Continue for unmounting...
             success = False
             print(e)
-       
-        time.sleep(random.randint(1,5))
-        # TODO: Anything less primitive?
-        #time.sleep(random.randint(1,5))
+      
+
+
+        # Unmounting...
         self.events_in.put(StatusUpdate(
                                       self.parent,
                                       None,
@@ -147,10 +186,8 @@ class PartitionWriter:
                                       _("Unmounting {0}...".format(self.part))
                                      ))
 
-        time.sleep(random.randint(1,5))
         try:
-            #dbus_handler.unmount(self.part)
-            pass
+            self.tools.unmount_retry(self.part)
         except dbus.DBusException:
             self.events_in.put(StatusUpdate(
                                           self.parent,
@@ -161,10 +198,10 @@ class PartitionWriter:
                                          ))
             return
 
-        time.sleep(random.randint(1,5))
+
+
+        # Report overall status
         if success:
-            # TODO: Anything less primitive?
-            #time.sleep(random.randint(1,5))
             self.events_in.put(StatusUpdate(
                                           self.parent,
                                           None,
@@ -180,14 +217,3 @@ class PartitionWriter:
                                           PartitionStatus.FAILED,
                                           _("Error while copying {0}!".format(self.part))
                                          ))
-
-        if random.randint(1,3) < 2:
-            self.events_in.put(StatusUpdate(
-                                          self.parent,
-                                          None,
-                                          self.part,
-                                          PartitionStatus.FAILED,
-                                          _("Error while copying {0}!".format(self.part))
-                                         ))
-
-

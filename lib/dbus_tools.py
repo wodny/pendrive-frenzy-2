@@ -20,6 +20,7 @@ import dbus
 import parted
 import copy
 import math
+import time
 
 class DBusTools:
     def __init__(self):
@@ -73,6 +74,19 @@ class DBusTools:
                                         dbus_interface = 'org.freedesktop.UDisks.Device',
                                         timeout = 300
                                        )
+
+    def unmount_retry(self, path, tries = 5, delay = 3):
+        for i in range(0, tries):
+            try:
+                self.unmount(path)
+                return
+            except dbus.DBusException, e:
+                print("Sleep...")
+                print(e)
+                time.sleep(delay)
+
+        raise dbus.DBusException("Unmounting of {0} failed".format(path))
+
 
     def create_mbr(self, path):
         device = self.get_device(path)
@@ -164,10 +178,10 @@ class DBusTools:
 
         device = self.get_device(drive)
 
+        print("Creating partition...")
         print("Bytes  : {0} -- {1}  ({2})".format(start, (start + size - 1), size))
         print("Sectors: {0} -- {1}  ({2})".format(start / 512, (start + size - 1) / 512, size / 512))
 
-        #return
         partition = device.PartitionCreate(
                                            start,
                                            size,
@@ -183,10 +197,13 @@ class DBusTools:
         return partition
 
     def create_fs(self, device, partspec):
+        if not partspec["fstype"]:
+            return False
+
+        print("Creating filesystem for {0}...".format(device))
+
         options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
         device = self.get_device(device)
-
-        print("FS")
 
         partition = device.FilesystemCreate(
                                            partspec["fstype"],
@@ -195,3 +212,4 @@ class DBusTools:
                                            timeout = 300
                                           )
 
+        return True

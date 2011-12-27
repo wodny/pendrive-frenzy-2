@@ -1,4 +1,5 @@
 import ConfigParser
+import os.path
 
 class ConfigException(Exception):
     pass
@@ -27,10 +28,23 @@ class Config:
         for p in self.partitions:
             section = "partition_{0}".format(p)
             self.partspecs[p] = dict()
-            # TODO: start ignored
+            self.partspecs[p]["id"] = p
             self.partspecs[p]["start"] = self.parser.getint(section, "start")
             self.partspecs[p]["size"] = self.parser.getint(section, "size")
             self.partspecs[p]["type"] = self.parser.get(section, "type")
             self.partspecs[p]["fstype"] = self.parser.get(section, "fstype")
             self.partspecs[p]["label"] = self.parser.get(section, "label")
             self.partspecs[p]["boot"] = self.parser.getboolean(section, "boot")
+            (self.partspecs[p]["path"], self.partspecs[p]["method"]) = \
+                self.get_partdata_spec(p)
+
+
+    def get_partdata_spec(self, p):
+        p = str(p)
+        abspath = os.path.abspath(self.path)
+        dirname = os.path.dirname(abspath)
+        path = os.path.join(dirname, "partitions", p)
+        if os.path.isdir(path):
+            return ("{0}/".format(path), "copy-files")
+        else:
+            return (path, "copy-image")
