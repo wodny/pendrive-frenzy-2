@@ -71,8 +71,8 @@ class MBRWriter:
 
         events = []
 
-        try:
-            for p in adjusted_specs:
+        for p in adjusted_specs:
+            try:
                 # Create partition (via MBR)
                 part_path = self.tools.create_partition(self.drive, adjusted_specs[p])
                 # Create FS (if specified)
@@ -90,16 +90,34 @@ class MBRWriter:
                                                _("Done {0}.".format(part_path))
                                  ))
 
-        except dbus.DBusException, e:
-            print(e)
-            self.events_in.put(StatusUpdate(
-                                          self.drive,
-                                          DriveStatus.DRIVE_PTERROR,
-                                          None,
-                                          None,
-                                          _("Error while creating partition {0} on {1}!".format(p, self.drive))
-                                         ))
-            return
+            except dbus.DBusException, e:
+                print(e)
+                self.events_in.put(StatusUpdate(
+                                              self.drive,
+                                              DriveStatus.DRIVE_PTERROR,
+                                              None,
+                                              None,
+                                              _("Error while creating partition {0} on {1}!".format(p, self.drive))
+                                             ))
+                return
+
+
+        # Post-creation script
+        if self.request.config.postscript:
+            try:
+                cmd = [self.request.config.postscript, self.tools.get_device_filename(self.drive)]
+                print(cmd)
+                subprocess.check_call(cmd)
+            except subprocess.CalledProcessError as e:
+                print(e)
+                self.events_in.put(StatusUpdate(
+                                              self.drive,
+                                              DriveStatus.DRIVE_PTERROR,
+                                              None,
+                                              None,
+                                              _("Error executing postscript for {0}!".format(self.drive))
+                                             ))
+                return
 
 
         # Signal all partitions have been created
@@ -129,24 +147,25 @@ class PartitionWriter:
 
 
         # Mount...
-        self.events_in.put(StatusUpdate(
-                                      self.parent,
-                                      None,
-                                      self.part,
-                                      PartitionStatus.IN_PROGRESS,
-                                      _("Mounting {0}...".format(self.part))
-                                     ))
-        try:
-            mountpoint = self.tools.mount(self.part)
-        except dbus.DBusException:
+        if self.partspec["method"] == "copy-files":
             self.events_in.put(StatusUpdate(
                                           self.parent,
                                           None,
                                           self.part,
-                                          PartitionStatus.FAILED,
-                                          _("Error while mounting {0}!".format(self.part))
+                                          PartitionStatus.IN_PROGRESS,
+                                          _("Mounting {0}...".format(self.part))
                                          ))
-            return
+            try:
+                mountpoint = self.tools.mount(self.part)
+            except dbus.DBusException:
+                self.events_in.put(StatusUpdate(
+                                              self.parent,
+                                              None,
+                                              self.part,
+                                              PartitionStatus.FAILED,
+                                              _("Error while mounting {0}!".format(self.part))
+                                             ))
+                return
 
 
 
@@ -174,29 +193,46 @@ class PartitionWriter:
             # Continue for unmounting...
             success = False
             print(e)
-      
+
+
+
+
+        # Postcreation
+        if self.partspec["method"] == "copy-files" and self.partspec["postscript"]:
+            try:
+                cmd = [self.partspec["postscript"], mountpoint]
+                print(cmd)
+                subprocess.check_call(cmd)
+            except subprocess.CalledProcessError as e:
+                # Continue for unmounting...
+                success = False
+                print(e)
+
+
+     
 
 
         # Unmounting...
-        self.events_in.put(StatusUpdate(
-                                      self.parent,
-                                      None,
-                                      self.part,
-                                      PartitionStatus.IN_PROGRESS,
-                                      _("Unmounting {0}...".format(self.part))
-                                     ))
-
-        try:
-            self.tools.unmount_retry(self.part)
-        except dbus.DBusException:
+        if self.partspec["method"] == "copy-files":
             self.events_in.put(StatusUpdate(
                                           self.parent,
                                           None,
                                           self.part,
-                                          PartitionStatus.FAILED,
-                                          _("Error while unmounting {0}!".format(self.part))
+                                          PartitionStatus.IN_PROGRESS,
+                                          _("Unmounting {0}...".format(self.part))
                                          ))
-            return
+
+            try:
+                self.tools.unmount_retry(self.part)
+            except dbus.DBusException:
+                self.events_in.put(StatusUpdate(
+                                              self.parent,
+                                              None,
+                                              self.part,
+                                              PartitionStatus.FAILED,
+                                              _("Error while unmounting {0}!".format(self.part))
+                                             ))
+                return
 
 
 

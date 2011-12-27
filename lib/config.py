@@ -13,9 +13,11 @@ class Config:
         sections = self.parser.sections()
         
         # Validation
-        for i in ("mode", "description", "copycommand", "copycommand_params"):
+        for i in ("mode", "description", "copycommand", "copycommand_params", "postscript"):
             value = self.parser.get("general", i)
             self.__dict__[i] = value
+
+        self.postscript = self.prefix_with_basedir(self.postscript)
 
         if self.mode not in ("copy-only", "create-mbr"):
             raise ConfigException("Invalid mode")
@@ -37,7 +39,16 @@ class Config:
             self.partspecs[p]["boot"] = self.parser.getboolean(section, "boot")
             (self.partspecs[p]["path"], self.partspecs[p]["method"]) = \
                 self.get_partdata_spec(p)
+            self.partspecs[p]["postscript"] = self.prefix_with_basedir(
+                self.parser.get(section, "postscript")
+            )
 
+    def prefix_with_basedir(self, path):
+        if not path:
+            return ""
+        abspath = os.path.abspath(self.path)
+        dirname = os.path.dirname(abspath)
+        return os.path.join(dirname, "scripts", path)
 
     def get_partdata_spec(self, p):
         p = str(p)

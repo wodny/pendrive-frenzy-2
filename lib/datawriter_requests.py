@@ -38,9 +38,10 @@ class PartitionWriterRequest(DataWriterRequest):
         l.start()
 
 class MBRWriterRequest(DataWriterRequest):
-    def __init__(self, drive, partspecs):
+    def __init__(self, drive, config):
         self.drive = drive
-        self.partspecs = partspecs
+        self.config = config
+        self.partspecs = config.partspecs
 
     def handle(self, writers, events_in):
         print("MBR WRITER REQUEST {0}".format(self.drive))

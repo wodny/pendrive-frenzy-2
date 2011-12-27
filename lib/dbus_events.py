@@ -38,7 +38,7 @@ class DriveAdded(DBusEvent):
         if added:
             if dispatch.config.mode == "create-mbr":
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_WAITFORPT
-                dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config.partspecs))
+                dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config))
             else:
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
         if self.drive in dispatch.drive_statuses:
