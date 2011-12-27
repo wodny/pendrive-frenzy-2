@@ -35,7 +35,7 @@ class MBRCreated(DBusVirtEvent):
 
     def handle(self, dispatch):
         print(_("MBR created: {0}").format(self.drive))
-        dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_HASPT
+        dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
         dispatch.update_status(self.drive, "New MBR for {0}.".format(self.drive))
 
 class PartitionsCreated(DBusVirtEvent):

@@ -54,7 +54,16 @@ class PartitionAdded(DBusEvent):
         self.part = part
 
     def handle(self, dispatch):
-        complete = dispatch.account_partition_added(DriveStatus.DRIVE_NEW, self.parent, self.part)
+        complete = dispatch.account_partition_added(
+            (DriveStatus.DRIVE_NEW, DriveStatus.DRIVE_HASPT),
+            self.parent,
+            self.part
+        )
+        print("COMPLETE: {0}".format(complete))
+
+        if dispatch.config and dispatch.config.mode == "create-mbr":
+            return
+
         if complete:
             available = \
                 dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)

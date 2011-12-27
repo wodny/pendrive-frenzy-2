@@ -71,7 +71,7 @@ class Dispatch(Process):
                         failed
                        )
 
-            if len(awaited):
+            if len(available):
                 return (DriveStatus.DRIVE_HASPT,
                         awaited,
                         available,
@@ -80,7 +80,7 @@ class Dispatch(Process):
                         failed
                        )
 
-            if len(available) or len(in_progress):
+            if len(in_progress):
                 return (DriveStatus.DRIVE_INPROGRESS,
                         awaited,
                         available,
@@ -172,12 +172,12 @@ class Dispatch(Process):
 
     def account_partition_added(self, accepttype, parent, part):
         print(_("New partition: {0}").format(part))
-        if part in self.drive_statuses:
-            print("DRIVE STATUS (PADD): {0}".format(self.drive_statuses[self.path]))
+        if parent in self.drive_statuses:
+            print("DRIVE STATUS (PADD): {0}".format(self.drive_statuses[parent]))
         if    self.writing \
           and self.config \
           and parent in self.drive_statuses \
-          and (accepttype is None or self.drive_statuses[parent] == accepttype):
+          and (accepttype is None or self.drive_statuses[parent] in accepttype):
             if part not in self.drive_partitions[parent]:
                 self.drive_partitions[parent][part] = PartitionStatus.IGNORED
                 return
@@ -187,7 +187,10 @@ class Dispatch(Process):
             awaited = \
                 self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
 
+            print("INIF: {0}".format(self.drive_partitions[parent]))
+
             return True if len(awaited) == 0 else False
+        print("OUTIF: {0}".format(self.drive_partitions[parent]))
         return False
 
         
