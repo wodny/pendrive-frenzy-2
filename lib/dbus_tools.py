@@ -202,6 +202,9 @@ class DBusTools:
 
         print("Creating filesystem for {0}...".format(device))
 
+        if partspec["fstype"] == "squashfs":
+            return True
+
         options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
         device = self.get_device(device)
 

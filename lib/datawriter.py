@@ -184,6 +184,7 @@ class PartitionWriter:
                 cmd = ["rsync", "-rI", "--delete", "--", self.partspec["path"], mountpoint]
             if self.partspec["method"] == "copy-image":
                 cmd = ["dd",
+                       "bs=8M",
                        "if={0}".format(self.partspec["path"]),
                        "of={0}".format(self.tools.get_device_filename(self.part))
                       ]

@@ -46,14 +46,14 @@ class Config:
     def prefix_with_basedir(self, path):
         if not path:
             return ""
-        abspath = os.path.abspath(self.path)
-        dirname = os.path.dirname(abspath)
+        realpath = os.path.realpath(self.path)
+        dirname = os.path.dirname(realpath)
         return os.path.join(dirname, "scripts", path)
 
     def get_partdata_spec(self, p):
         p = str(p)
-        abspath = os.path.abspath(self.path)
-        dirname = os.path.dirname(abspath)
+        realpath = os.path.realpath(self.path)
+        dirname = os.path.dirname(realpath)
         path = os.path.join(dirname, "partitions", p)
         if os.path.isdir(path):
             return ("{0}/".format(path), "copy-files")
