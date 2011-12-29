@@ -40,7 +40,7 @@ from lib.datawriter_spawner import DataWriterSpawner
 from lib.config_events import ReadConfig
 
 
-def main(args):
+def main(configfilename):
     # Drive status updates, GUI events
     qevents = multiprocessing.Queue()
     # GUI update instructions
@@ -90,8 +90,7 @@ def main(args):
         d = Dispatch(quiting, qevents, qupdates, qwriters)
         d.start()
 
-        if len(args) >= 1:
-            qevents.put(ReadConfig(args[0]))
+        qevents.put(ReadConfig(configfilename))
         
         # Spawn writers on request
         dws = DataWriterSpawner(qwriters, writers, qevents)
@@ -189,5 +188,7 @@ def parse_options():
 
 if __name__ == '__main__':
     (options, args) = parse_options()
+    if len(args) < 1:
+        exit(_("Config filename required."))
     init_logging(options)
-    main(args)
+    main(args[0])
