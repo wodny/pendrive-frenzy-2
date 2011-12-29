@@ -48,6 +48,48 @@ class DBusTools:
         model = self.get_prop(device, "DriveModel")
         serial = self.get_prop(device, "DriveSerial")
         return "{0}/{1} {2}/{3}".format(iface, vendor, model, serial)
+    
+    def get_partition_spec(self, path):
+        device = self.get_device(path)
+        start = int(device.Get(
+            'org.freedesktop.UDisks.Device',
+            "PartitionOffset",
+            dbus_interface = 'org.freedesktop.DBus.Properties',
+            timeout = 300
+        ))
+        size = int(device.Get(
+            'org.freedesktop.UDisks.Device',
+            "PartitionSize",
+            dbus_interface = 'org.freedesktop.DBus.Properties',
+            timeout = 300
+        ))
+        ptype = str(device.Get(
+            'org.freedesktop.UDisks.Device',
+            "PartitionType",
+            dbus_interface = 'org.freedesktop.DBus.Properties',
+            timeout = 300
+        ))
+        fstype = str(device.Get(
+            'org.freedesktop.UDisks.Device',
+            "IdType",
+            dbus_interface = 'org.freedesktop.DBus.Properties',
+            timeout = 300
+        ))
+        label = str(device.Get(
+            'org.freedesktop.UDisks.Device',
+            "IdLabel",
+            dbus_interface = 'org.freedesktop.DBus.Properties',
+            timeout = 300
+        ))
+        flags = device.Get(
+            'org.freedesktop.UDisks.Device',
+            "PartitionFlags",
+            dbus_interface = 'org.freedesktop.DBus.Properties',
+            timeout = 300
+        )
+        boot = "boot" in flags
+        return (start, size, ptype, fstype, label, boot)
+
         
 
     def is_drive(self, path):
@@ -66,6 +108,27 @@ class DBusTools:
     def get_parent(self, path):
         device = self.get_device(path)
         return self.get_prop(device, "PartitionSlave")
+
+    def get_udisks(self):
+        return self.systembus.get_object(
+            'org.freedesktop.UDisks',
+            '/org/freedesktop/UDisks',
+        )
+
+    def get_path_of_devfile(self, devfile):
+        udisks = self.get_udisks()
+        for path in udisks.EnumerateDevices():
+            if self.get_device_filename(path) == devfile:
+                return path
+    
+    def get_children(self, parentpath):
+        udisks = self.get_udisks()
+        children = []
+        for path in udisks.EnumerateDevices():
+            if self.get_parent(path) == parentpath:
+                children.append(path)
+        children.sort()
+        return children
 
     def mount(self, path):
         device = self.get_device(path)

@@ -39,6 +39,7 @@ class StatusUpdate(DataWriterEvent):
             dispatch.drive_statuses[self.parent] = self.parent_status
         if self.part and self.part_status is not None:
             dispatch.drive_partitions[self.parent][self.part] = self.part_status
+            logging.debug(_("Partitions status: {0}").format(dispatch.drive_partitions[self.parent]))
         dispatch.update_status(self.parent, self.status_text)
         
 class DataWriterDone(DataWriterEvent):
