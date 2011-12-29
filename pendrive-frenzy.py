@@ -40,10 +40,15 @@ from lib.config_events import ReadConfig
 
 
 def main():
+    # Drive status updates, GUI events
     qevents = multiprocessing.Queue()
+    # GUI update instructions
     qupdates = multiprocessing.Queue()
+    # DataWriter requests
     qwriters = multiprocessing.Queue()
+    # A queue to quit the DBusHandler
     qquits = multiprocessing.Queue()
+    # Flag signalled when any module wants to quit
     quiting = multiprocessing.Event()
 
     writers = dict()
@@ -56,9 +61,10 @@ def main():
     #  |                  updates         quits         |             |
     #  |                                               \|/       |#|  |
     #  |           main     |#|   main     |#|          '        |#|  |
-    #  |          thread -->|#|  thread -->|#|--> DBusHandler -->|#|--'
-    #  |          (Quit)    |#|  (Quit)    |#|                   |#| 
-    #  |                    |#|                                  |#|
+    #  |      .-- thread -->|#|  thread -->|#|--> DBusHandler -->|#|--'
+    #  |      |   (Quit)    |#|  (Quit)    |#|                   |#| 
+    #  |     \|/            |#|                                  |#|
+    #  |      '             |#|                                  |#|
     #  '-> Dispatch/Logic ->|#|------------> GUI --------------->|#|
     #             |         |#|                                  |#| 
     #             |    |#|                                       |#| 
@@ -107,7 +113,7 @@ def main():
     qupdates.join_thread()
     gui_launcher.join()
 
-    logging.info(_("Terminating DataWriter sprawner..."))
+    logging.info(_("Terminating DataWriter spawner..."))
     qwriters.put(None)
     dws.join()
     qwriters.close()
@@ -135,10 +141,25 @@ def main():
 
     logging.info(_("Bye."))
 
-if __name__ == '__main__':
+
+
+def init_logging():
+    format="%(asctime)s %(levelname)s %(processName)s %(threadName)s %(message)s"
+    datefmt="%Y-%m-%d %H:%M:%S"
+
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(asctime)s %(levelname)s %(processName)s %(threadName)s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        format=format,
+        datefmt=datefmt
     )
+    fhandler = logging.FileHandler("pendrive-frenzy.log")
+    fhandler.setFormatter(logging.Formatter(format, datefmt))
+
+    rootlogger = logging.getLogger()
+    rootlogger.addHandler(fhandler)
+
+
+
+if __name__ == '__main__':
+    init_logging()
     main()
