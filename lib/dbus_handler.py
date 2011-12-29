@@ -53,7 +53,8 @@ class DBusHandler:
             return
         
         if member == "DeviceAdded" and \
-           self.tools.is_drive(path):
+           self.tools.is_drive(path) and \
+           self.tools.get_conn_interface(path) == "usb":
             driveid = self.tools.get_drive_id(path)
             logging.info(_("New drive {0} {1}.").format(path, driveid))
             port = self.tools.get_port(path)
