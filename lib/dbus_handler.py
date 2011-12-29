@@ -20,6 +20,7 @@ import dbus
 from dbus.mainloop.glib import DBusGMainLoop
 from dbus_events import *
 from dbus_tools import DBusTools
+import logging
 
 class DBusHandler:
     def __init__(self, events_in):
@@ -50,12 +51,16 @@ class DBusHandler:
             path = args[0]
         else:
             return
-
+        
         if member == "DeviceAdded" and \
-           self.tools.is_drive(path)     :#and \
+           self.tools.is_drive(path):
+            driveid = self.tools.get_drive_id(path)
+            logging.info(_("New drive {0} {1}.").format(path, driveid))
             port = self.tools.get_port(path)
             self.events_in.put(DriveAdded(path, port))
         if member == "DeviceAdded" and self.tools.is_partition(path):
+            logging.debug(_("New partition {0}.").format(path))
             self.events_in.put(PartitionAdded(self.tools.get_parent(path), path))
         if member == "DeviceRemoved":
+            logging.debug(_("Removed device {0}.").format(path))
             self.events_in.put(DeviceRemoved(path))

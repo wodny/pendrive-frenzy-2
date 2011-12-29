@@ -41,6 +41,15 @@ class DBusTools:
                           timeout = 300
                          )
 
+    def get_drive_id(self, path):
+        device = self.get_device(path)
+        iface = self.get_prop(device, "DriveConnectionInterface")
+        vendor = self.get_prop(device, "DriveVendor")
+        model = self.get_prop(device, "DriveModel")
+        serial = self.get_prop(device, "DriveSerial")
+        return "{0}/{1} {2}/{3}".format(iface, vendor, model, serial)
+        
+
     def is_drive(self, path):
         device = self.get_device(path)
         return self.get_prop(device, "DeviceIsDrive")
