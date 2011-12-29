@@ -92,6 +92,7 @@ def main():
         # Join to Dispatch/Logic
         d.join()
     except KeyboardInterrupt:
+        # TODO: don't depend on GUI
         qupdates.put(Quit())
     logging.info(_("Quiting... ^C will force termination."))
     logging.info(_("Terminating DBus handler..."))

@@ -111,7 +111,9 @@ class MBRWriter:
             try:
                 cmd = [self.request.config.postscript, self.tools.get_device_filename(self.drive)]
                 logging.debug(_("Executing post-MBR script {0}...").format(cmd))
-                subprocess.check_call(cmd)
+                output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                for line in output.split('\n'):
+                    logging.debug(_("Command output: {0}").format(line))
             except subprocess.CalledProcessError as e:
                 logging.error(_("Error executing postscript for {0}: {1}!").format(self.drive, e))
                 self.events_in.put(StatusUpdate(
@@ -213,7 +215,9 @@ class PartitionWriter:
             try:
                 cmd = [self.partspec["postscript"], mountpoint]
                 logging.debug(_("Executing post-partition script {0}...").format(cmd))
-                subprocess.check_call(cmd)
+                output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+                for line in output.split('\n'):
+                    logging.debug(_("Command output: {0}").format(line))
             except subprocess.CalledProcessError as e:
                 # Continue for unmounting...
                 logging.error(_("Error executing postscript: {0}").format(e))
