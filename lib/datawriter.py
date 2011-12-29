@@ -116,7 +116,7 @@ class MBRWriter:
                     logging.debug(_("Command output: {0}").format(line))
             except subprocess.CalledProcessError as e:
                 for line in e.output.split('\n'):
-                    logging.debug(_("Command output: {0}").format(line))
+                    logging.error(_("Command output: {0}").format(line))
                 logging.error(_("Error executing postscript for {0}: {1}!").format(self.drive, e))
                 self.events_in.put(StatusUpdate(
                                               self.drive,
@@ -206,7 +206,7 @@ class PartitionWriter:
                 logging.debug(_("Command output: {0}").format(line))
         except subprocess.CalledProcessError as e:
             for line in e.output.split('\n'):
-                logging.debug(_("Command output: {0}").format(line))
+                logging.error(_("Command output: {0}").format(line))
             # Continue for unmounting...
             logging.error(_("Error executing copy command: {0}").format(e))
             success = False
@@ -224,7 +224,7 @@ class PartitionWriter:
                     logging.debug(_("Command output: {0}").format(line))
             except subprocess.CalledProcessError as e:
                 for line in e.output.split('\n'):
-                    logging.debug(_("Command output: {0}").format(line))
+                    logging.error(_("Command output: {0}").format(line))
                 # Continue for unmounting...
                 logging.error(_("Error executing postscript: {0}").format(e))
                 success = False
