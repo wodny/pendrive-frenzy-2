@@ -2,6 +2,8 @@ If You try to create logical partitions with this tool, probably You are
 going to encounter errors. It's not because of the tool itself but a bug 
 within the UDisks system, which is used by the tool.
 
+Error still present in udisks 1.0.4-2.
+
 For further information, please follow the links below:
 
 http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=652993
