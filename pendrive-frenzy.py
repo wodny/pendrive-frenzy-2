@@ -30,6 +30,7 @@ import threading
 
 import sys
 import logging
+import optparse
 
 from lib.dispatch import Dispatch
 from lib.dbus_handler_launcher import DBusHandlerLauncher
@@ -39,7 +40,7 @@ from lib.datawriter_spawner import DataWriterSpawner
 from lib.config_events import ReadConfig
 
 
-def main():
+def main(args):
     # Drive status updates, GUI events
     qevents = multiprocessing.Queue()
     # GUI update instructions
@@ -89,8 +90,8 @@ def main():
         d = Dispatch(quiting, qevents, qupdates, qwriters)
         d.start()
 
-        if len(sys.argv) >= 2:
-            qevents.put(ReadConfig(sys.argv[1]))
+        if len(args) >= 1:
+            qevents.put(ReadConfig(args[0]))
         
         # Spawn writers on request
         dws = DataWriterSpawner(qwriters, writers, qevents)
@@ -142,24 +143,51 @@ def main():
     logging.info(_("Bye."))
 
 
-
-def init_logging():
+def init_logging(options):
     format="%(asctime)s %(levelname)s %(processName)s %(threadName)s %(message)s"
     datefmt="%Y-%m-%d %H:%M:%S"
 
+    numeric_level = getattr(logging, options.loglevel.upper(), None)
+    if not isinstance(numeric_level, int):
+        raise ValueError("Invalid log level: {0}".format(options.loglevel))
+
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=numeric_level,
         format=format,
         datefmt=datefmt
     )
-    fhandler = logging.FileHandler("pendrive-frenzy.log")
-    fhandler.setFormatter(logging.Formatter(format, datefmt))
 
-    rootlogger = logging.getLogger()
-    rootlogger.addHandler(fhandler)
+    if options.enablelogfile:
+        fhandler = logging.FileHandler(options.logfile)
+        fhandler.setFormatter(logging.Formatter(format, datefmt))
+
+        rootlogger = logging.getLogger()
+        rootlogger.addHandler(fhandler)
 
 
+def parse_options():
+    usage = _("usage: %prog [options] <configfile>")
+    parser = optparse.OptionParser(usage=usage)
+    parser.add_option(
+        "-l", "--loglevel",
+        default="INFO",
+        help=_("log level")
+    )
+    parser.add_option(
+        "-w", "--enablelogfile",
+        action="store_true",
+        dest="enablelogfile",
+        default=False,
+        help=_("should logging to a file be enabled")
+    )
+    parser.add_option(
+        "-f", "--logfile",
+        default="pendrive-frenzy.log",
+        help=_("log filename")
+    )
+    return parser.parse_args()
 
 if __name__ == '__main__':
-    init_logging()
-    main()
+    (options, args) = parse_options()
+    init_logging(options)
+    main(args)
