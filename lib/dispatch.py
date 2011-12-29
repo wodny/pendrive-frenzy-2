@@ -74,6 +74,17 @@ class Dispatch(Process):
                         failed
                        )
 
+            if len(awaited):
+                return (DriveStatus.DRIVE_INPROGRESS,
+                        awaited,
+                        available,
+                        in_progress,
+                        done,
+                        failed
+                       )
+
+
+
             if len(available):
                 return (DriveStatus.DRIVE_HASPT,
                         awaited,
