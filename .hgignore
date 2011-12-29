@@ -3,3 +3,6 @@ syntax: glob
 *.pyc
 *.swp
 *.mo
+configs
+pendrive-frenzy.log
+README.html

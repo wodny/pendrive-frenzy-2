@@ -1,16 +1,30 @@
+#    Copyright 2011  Marcin Szewczyk <Marcin.Szewczyk@wodny.org>
+#
+#    This file is part of pendrive-frenzy.
+#
+#    Pendrive-frenzy is free software: you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation, either version 3 of the License, or
+#    (at your option) any later version.
+#
+#    Pendrive-frenzy is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
+
+
 import dbus
 from dbus.mainloop.glib import DBusGMainLoop
-from dispatch import EventQueue
-import events
+from dbus_events import *
+from dbus_tools import DBusTools
+import logging
 
 class DBusHandler:
-    __single = None
-
-
-    def __init__(self):
-        if DBusHandler.__single:
-            raise DBusHandler.__single
-        DBusHandler.__single = self
+    def __init__(self, events_in):
+        self.events_in = events_in
 
         DBusGMainLoop(set_as_default=True)
     
@@ -25,77 +39,29 @@ class DBusHandler:
                                      path_keyword="path"
                                     )
 
-        self.ev_queue = EventQueue.instance()
 
         # Assure the UDisks service runs
-        self.get_device("/org/freedesktop/UDisks")
-
-    @staticmethod
-    def instance():
-        return DBusHandler.__single if DBusHandler.__single else DBusHandler()
+        self.tools = DBusTools()
+        self.tools.get_device("/org/freedesktop/UDisks")
 
     def handler(self, *args, **kwargs):
         member = kwargs['member']
-        path = args[0]
+
+        if len(args) >= 1:
+            path = args[0]
+        else:
+            return
+        
         if member == "DeviceAdded" and \
-           self.is_drive(path)     and \
-           self.get_conn_interface(path) == "usb":
-            port = self.get_port(path)
-            self.ev_queue.put(events.DriveAdded(path, port))
-        if member == "DeviceAdded" and self.is_partition(path):
-            self.ev_queue.put(events.PartitionAdded(path, self.get_parent(path)))
-        if member == "DeviceRemoved": self.ev_queue.put(events.DeviceRemoved(path))
-
-
-    def get_device(self, path):
-        return self.systembus.get_object(
-                                         'org.freedesktop.UDisks',
-                                         path
-                                        )
-
-    def get_prop(self, device, propname):
-        return device.Get(
-                          'org.freedesktop.UDisks.Device',
-                          propname,
-                          dbus_interface = 'org.freedesktop.DBus.Properties',
-                          timeout = 300
-                         )
-
-    def is_drive(self, path):
-        device = self.get_device(path)
-        return self.get_prop(device, "DeviceIsDrive")
-
-    def is_partition(self, path):
-        device = self.get_device(path)
-        return self.get_prop(device, "DeviceIsPartition")
-
-    def get_port(self, path):
-        device = self.get_device(path)
-        port = self.get_prop(device, "NativePath")
-        return port[port.find("/usb"): port.rfind("/host")]
-
-    def get_parent(self, path):
-        device = self.get_device(path)
-        return self.get_prop(device, "PartitionSlave")
-
-    def mount(self, path):
-        device = self.get_device(path)
-        if self.get_prop(device, "DeviceIsMounted"):
-            return self.get_prop(device, "DeviceMountPaths")[0]
-        return device.FilesystemMount(
-                                      "", [],
-                                      dbus_interface = 'org.freedesktop.UDisks.Device',
-                                      timeout = 300
-                                     )
-
-    def unmount(self, path):
-        device = self.get_device(path)
-        return device.FilesystemUnmount(
-                                        [],
-                                        dbus_interface = 'org.freedesktop.UDisks.Device',
-                                        timeout = 300
-                                       )
-
-    def get_conn_interface(self, path):
-        device = self.get_device(path)
-        return self.get_prop(device, "DriveConnectionInterface")
+           self.tools.is_drive(path) and \
+           self.tools.get_conn_interface(path) == "usb":
+            driveid = self.tools.get_drive_id(path)
+            logging.info(_("New drive {0} {1}.").format(path, driveid))
+            port = self.tools.get_port(path)
+            self.events_in.put(DriveAdded(path, port))
+        if member == "DeviceAdded" and self.tools.is_partition(path):
+            logging.debug(_("New partition {0}.").format(path))
+            self.events_in.put(PartitionAdded(self.tools.get_parent(path), path))
+        if member == "DeviceRemoved":
+            logging.debug(_("Removed device {0}.").format(path))
+            self.events_in.put(DeviceRemoved(path))
