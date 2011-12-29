@@ -16,6 +16,7 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 from datawriter_launcher import MBRWriterLauncher, PartitionWriterLauncher
+import logging
 
 class DataWriterRequest:
     pass
@@ -28,11 +29,11 @@ class PartitionWriterRequest(DataWriterRequest):
         self.partspec = partspec
 
     def handle(self, writers, events_in):
-        print("PARTITION WRITER REQUEST {0} {1} {2}".format(self.parent, self.part, self.partspec))
+        logging.debug(_("Requested PartitionDataWriter for {0}.").format(self.part))
         if self.part in writers:
-            print("Already have writer for this part.")
+            logging.error(_("Already have PartitionDataWriter for {0}!").format(self.part))
             return
-        print("Spawning writer")
+        logging.debug(_("Spawning PartitionDataWriter for {0}...").format(self.part))
         l = PartitionWriterLauncher(events_in, self)
         writers[self.part] = l
         l.start()
@@ -44,11 +45,11 @@ class MBRWriterRequest(DataWriterRequest):
         self.partspecs = config.partspecs
 
     def handle(self, writers, events_in):
-        print("MBR WRITER REQUEST {0}".format(self.drive))
+        logging.debug(_("Requested MBRWriter for {0}.").format(self.drive))
         if self.drive in writers:
-            print("Already have writer for this device.")
+            logging.error(_("Already have MBRWriter for {0}!").format(self.drive))
             return
-        print("Spawning MBR writer")
+        logging.debug(_("Spawning MBRWriter for {0}...").format(self.drive))
         l = MBRWriterLauncher(events_in, self)
         writers[self.drive] = l
         l.start()

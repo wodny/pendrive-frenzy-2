@@ -21,6 +21,7 @@ import parted
 import copy
 import math
 import time
+import logging
 
 class DBusTools:
     def __init__(self):
@@ -81,8 +82,7 @@ class DBusTools:
                 self.unmount(path)
                 return
             except dbus.DBusException, e:
-                print("Sleep...")
-                print(e)
+                logging.debug(_("Sleeping after DBusException during unmounting: {0}...").format(e))
                 time.sleep(delay)
 
         raise dbus.DBusException("Unmounting of {0} failed".format(path))
@@ -178,9 +178,9 @@ class DBusTools:
 
         device = self.get_device(drive)
 
-        print("Creating partition...")
-        print("Bytes  : {0} -- {1}  ({2})".format(start, (start + size - 1), size))
-        print("Sectors: {0} -- {1}  ({2})".format(start / 512, (start + size - 1) / 512, size / 512))
+        logging.debug(_("Creating partition..."))
+        logging.debug(_("Bytes  : {0} -- {1}  ({2})").format(start, (start + size - 1), size))
+        logging.debug(_("Sectors: {0} -- {1}  ({2})").format(start / 512, (start + size - 1) / 512, size / 512))
 
         partition = device.PartitionCreate(
                                            start,
@@ -200,9 +200,10 @@ class DBusTools:
         if not partspec["fstype"]:
             return False
 
-        print("Creating filesystem for {0}...".format(device))
+        logging.debug(_("Creating filesystem for {0}...").format(device))
 
         if partspec["fstype"] in ( "squashfs", "image" ):
+            logging.debug(_("Dummy filesystem for {0}.").format(device))
             return True
 
         options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []

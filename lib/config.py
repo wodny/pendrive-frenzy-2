@@ -20,6 +20,7 @@
 
 import ConfigParser
 import os.path
+import logging
 
 class ConfigException(Exception):
     pass

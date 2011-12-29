@@ -28,10 +28,12 @@ from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 import gui_updates
 import tools
+import logging
 
 class Dispatch(Process):
     def __init__(self, events_out, updates_in, writers_in):
         Process.__init__(self)
+        self.name = "Dispatch"
         self.work = True
         self.events_out = events_out
         self.updates_in = updates_in
@@ -156,8 +158,8 @@ class Dispatch(Process):
  
 
     def account_drive_added(self, drive):
-        print(_("New drive: {0}").format(drive))
         if self.writing and self.config:
+            logging.debug(_("Accounting new drive: {0}").format(drive))
             self.drive_partitions[drive] = dict(
                 (   [
                         "{0}{1}".format(drive, p),
@@ -171,35 +173,36 @@ class Dispatch(Process):
 
 
     def account_partition_added(self, accepttype, parent, part):
-        print(_("New partition: {0}").format(part))
-        if parent in self.drive_statuses:
-            print("DRIVE STATUS (PADD): {0}".format(self.drive_statuses[parent]))
+        # TODO: Disk status ignored instead of partitions.
         if    self.writing \
           and self.config \
           and parent in self.drive_statuses \
           and (accepttype is None or self.drive_statuses[parent] in accepttype):
+            logging.debug(_("New partition: {0}").format(part))
             if part not in self.drive_partitions[parent]:
                 self.drive_partitions[parent][part] = PartitionStatus.IGNORED
+                logging.debug(_("Ignored partition: {0}").format(part))
                 return
             if self.drive_partitions[parent][part] == PartitionStatus.IGNORED:
+                logging.debug(_("Previously ignored partition: {0}").format(part))
                 return
             self.drive_partitions[parent][part] = PartitionStatus.AVAILABLE
             awaited = \
                 self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
 
-            print("INIF: {0}".format(self.drive_partitions[parent]))
-
             return True if len(awaited) == 0 else False
-        print("OUTIF: {0}".format(self.drive_partitions[parent]))
         return False
 
         
 
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
+        logging.debug(_("Entering dispatch loop..."))
         while self.work:
             order = self.events_out.get()
             order.handle(self)
+
+        logging.debug(_("Exited dispatch loop."))
 
         self.updates_in.close()
         self.updates_in.join_thread()
@@ -207,3 +210,5 @@ class Dispatch(Process):
         self.writers_in.join_thread()
         self.events_out.close()
         self.events_out.join_thread()
+
+        logging.debug(_("Dispatch end."))

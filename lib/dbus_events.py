@@ -24,6 +24,7 @@ from partition_statuses import PartitionStatus
 from dbus_tools import DBusTools
 from datawriter_requests import PartitionWriterRequest, MBRWriterRequest
 import tools
+import logging
 
 class DBusEvent:
     pass
@@ -41,8 +42,6 @@ class DriveAdded(DBusEvent):
                 dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config))
             else:
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
-        if self.drive in dispatch.drive_statuses:
-            print("DRIVE STATUS (ADD): {0}".format(dispatch.drive_statuses[self.drive]))
         dispatch.updates_in.put(gui_updates.DriveAdded(self.drive, self.port))
         dispatch.update_status(self.drive, "New drive {0}.".format(self.drive))
 
@@ -59,7 +58,6 @@ class PartitionAdded(DBusEvent):
             self.parent,
             self.part
         )
-        print("COMPLETE: {0}".format(complete))
 
         if dispatch.config and dispatch.config.mode == "create-mbr":
             return
@@ -79,21 +77,10 @@ class DeviceRemoved(DBusEvent):
         self.path = path
 
     def handle(self, dispatch):
-        print(_("Device removed: {0}").format(self.path))
-        if self.path in dispatch.drive_statuses:
-            print("DRIVE STATUS (RM): {0}".format(dispatch.drive_statuses[self.path]))
         try:
             del dispatch.drive_partitions[self.path]
             del dispatch.drive_statuses[self.path]
         except KeyError:
             pass
         dispatch.updates_in.put(gui_updates.DeviceRemoved(self.path))
-        # TODO: reenable
-        #dispatch.writers_in.put(DataWriterRequest(self.path, "le source", True))
-
-class Dummy(DBusEvent):
-    def __init__(self, text):
-        self.text = text
-
-    def handle(self, dispatch):
-        print("TEXT: {0}".format(self.text))
+        # TODO: Do we need writer removal here?

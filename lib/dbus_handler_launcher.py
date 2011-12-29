@@ -19,20 +19,23 @@
 from threading import Thread
 from multiprocessing import Process
 import signal
+import logging
 
 class DBusHandlerQuiter(Thread):
     def __init__(self, loop, quits_out):
         Thread.__init__(self)
         self.loop = loop
         self.quits_out = quits_out
+        self.name = "DBusHandlerQuiter"
 
     def run(self):
+        logging.debug(_("Waiting for DBusHandler quit..."))
         self.quits_out.get()
+        logging.debug(_("Got quit for DBusHandler."))
         import gobject
         gobject.idle_add(self.loop.quit)
         self.quits_out.close()
         self.quits_out.join_thread()
-
 
 
 class DBusHandlerLauncher(Process):
@@ -40,6 +43,7 @@ class DBusHandlerLauncher(Process):
         Process.__init__(self)
         self.events_in = events_in
         self.quits_out = quits_out
+        self.name = "DBusHandlerLauncher"
     
     def run(self):
         from dbus_handler import DBusHandler
@@ -53,9 +57,12 @@ class DBusHandlerLauncher(Process):
         q = DBusHandlerQuiter(loop, self.quits_out)
         q.start()
 
+        logging.debug(_("Entering DBusHandlerLauncher loop..."))
         loop.run()
+        logging.debug(_("Exited DBusHandlerLauncher loop."))
 
         self.events_in.close()
         self.events_in.join_thread()
         self.quits_out.close()
         self.quits_out.join_thread()
+        logging.debug(_("DBusHandlerLauncher end."))

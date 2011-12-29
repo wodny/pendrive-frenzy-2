@@ -16,13 +16,14 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
+import logging
 
 class GUIEvent:
     pass
 
 class Quit(GUIEvent):
     def handle(self, dispatch):
-        print(_("GUI quit"))
+        logging.info(_("Got GUI quit event."))
         dispatch.work = False
 
 class WritingChanged(GUIEvent):

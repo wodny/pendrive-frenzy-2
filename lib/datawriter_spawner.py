@@ -18,6 +18,7 @@
 
 
 from threading import Thread
+import logging
 
 class DataWriterSpawner(Thread):
     def __init__(self, writers_out, writers, events_in):
@@ -25,31 +26,14 @@ class DataWriterSpawner(Thread):
         self.writers_out = writers_out
         self.writers = writers
         self.events_in = events_in
-
-    #def new_datawriter(self, writer_req):
-    #    dw = DataWriterLauncher(self.events_in, writer_req)
-    #    self.writers[writer_req.destination] = dw
-    #    dw.start()
-
-    #def del_datawriter(self, writer_req):
-    #    del self.writers[writer_req.destination]
+        self.name = "SpawnerThread"
 
     def run(self):
+        logging.debug(_("DataWriterSpawner running..."))
         writer_req = self.writers_out.get()
         while writer_req:
             writer_req.handle(self.writers, self.events_in)
-
-            #if writer_req.remove:
-            #    if writer_req.destination in self.writers:
-            #        self.del_datawriter(writer_req)
-            #        print("Removed writer for {0}".format(writer_req.destination))
-            #else:
-            #    if writer_req.destination in self.writers:
-            #        print("Already writing this destination")
-            #    else:
-            #        print("New writer for {0}".format(writer_req.destination))
-            #        self.new_datawriter(writer_req)
             writer_req = self.writers_out.get()
-        print("DataWriter spawner exiting...")
+        logging.info(_("DataWriterSpawner exiting..."))
         self.writers_out.close()
         self.writers_out.join_thread()

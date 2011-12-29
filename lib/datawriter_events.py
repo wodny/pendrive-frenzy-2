@@ -20,6 +20,7 @@
 import gui_updates
 from drive_statuses import DriveStatus
 from datawriter_removal import DataWriterRemoval
+import logging
 
 class DataWriterEvent:
     pass
@@ -45,4 +46,5 @@ class DataWriterDone(DataWriterEvent):
         self.device = device
 
     def handle(self, dispatch):
+        logging.debug(_("DataWriter for {0} done.").format(self.device))
         dispatch.writers_in.put(DataWriterRemoval(self.device))

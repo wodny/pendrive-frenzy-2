@@ -29,6 +29,7 @@ import multiprocessing
 import threading
 
 import sys
+import logging
 
 from lib.dispatch import Dispatch
 from lib.dbus_handler_launcher import DBusHandlerLauncher
@@ -92,31 +93,31 @@ def main():
         d.join()
     except KeyboardInterrupt:
         qupdates.put(Quit())
-    print(_("Quiting... ^C will force termination."))
-    print(_("Terminating DBus handler..."))
+    logging.info(_("Quiting... ^C will force termination."))
+    logging.info(_("Terminating DBus handler..."))
 
     qquits.put(None)
     qquits.close()
     qquits.join_thread()
     dbus_launcher.join()
 
-    print(_("Waiting for GUI..."))
+    logging.info(_("Waiting for GUI..."))
     qupdates.close()
     qupdates.join_thread()
     gui_launcher.join()
 
-    print(_("Terminating DataWriter sprawner..."))
+    logging.info(_("Terminating DataWriter sprawner..."))
     qwriters.put(None)
     dws.join()
     qwriters.close()
     qwriters.join_thread()
 
-    print(_("Waiting for writers..."))
+    logging.info(_("Waiting for writers..."))
     for writer in writers:
-        print("  {0}".format(writer))
+        logging.info("  {0}".format(writer))
         writers[writer].join()
 
-    print(_("Waiting for logic..."))
+    logging.info(_("Waiting for logic..."))
     qevents.close()
     qevents.join_thread()
     d.join()
@@ -125,11 +126,16 @@ def main():
     # http://bugs.python.org/issue9207
     # semi-fix?
     remaining_threads = threading.enumerate()[1:]
-    print("Waiting for {0} remaining thread(s)...".format(len(remaining_threads)))
+    logging.info(_("Waiting for {0} remaining thread(s)...").format(len(remaining_threads)))
     for thread in remaining_threads:
         thread.join()
 
-    print(_("Bye."))
+    logging.info(_("Bye."))
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s %(levelname)s %(processName)s %(threadName)s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
     main()

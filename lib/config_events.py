@@ -21,6 +21,7 @@
 import ConfigParser
 from lib.config import Config, ConfigException
 import gui_updates
+import logging
 
 class ConfigEvent:
     pass
@@ -31,15 +32,14 @@ class ReadConfig(ConfigEvent):
 
     def handle(self, dispatch):
         try:
+            logging.info(_("Loading configuration from file {0}...".format(self.path)))
             config = Config(self.path)
-            loaded_msg = _("Configuration loaded ({0}).".format(self.path))
-            print(loaded_msg)
+            logging.info(_("Configuration loaded."))
             dispatch.config = config
             description = config.description
-            dispatch.updates_in.put(gui_updates.StatusBarUpdate(loaded_msg))
+            dispatch.updates_in.put(gui_updates.StatusBarUpdate(_("Configuration loaded.")))
             dispatch.updates_in.put(gui_updates.InfoBarUpdate(description))
         except (ConfigParser.Error, ValueError, ConfigException) as e:
-            print(_("Configuration parsing error."))
-            print(e)
+            logging.error(_("Configuration parsing error: {0}".format(e)))
             dispatch.updates_in.put(gui_updates.StatusBarUpdate(_("Configuration parsing error.")))
             dispatch.updates_in.put(gui_updates.InfoBarUpdate(""))

@@ -25,6 +25,7 @@ from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 import tools
 from datawriter_requests import PartitionWriterRequest
+import logging
 
 class DBusVirtEvent:
     pass
@@ -34,7 +35,7 @@ class MBRCreated(DBusVirtEvent):
         self.drive = drive
 
     def handle(self, dispatch):
-        print(_("MBR created: {0}").format(self.drive))
+        logging.debug(_("Created MBR on {0}.").format(self.drive))
         dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
         dispatch.update_status(self.drive, "New MBR for {0}.".format(self.drive))
 
@@ -43,9 +44,9 @@ class PartitionsCreated(DBusVirtEvent):
         self.drive = drive
 
     def handle(self, dispatch):
-        print(_("Partitions created: {0}").format(self.drive))
+        logging.debug(_("Created partitions on {0}.").format(self.drive))
         dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_HASPT
-        dispatch.update_status(self.drive, "Created partitions on {0}.".format(self.drive))
+        dispatch.update_status(self.drive, _("Created partitions on {0}.").format(self.drive))
 
 class FSCreated(DBusVirtEvent):
     def __init__(self, drive, part):
@@ -53,7 +54,7 @@ class FSCreated(DBusVirtEvent):
         self.part = part
 
     def handle(self, dispatch):
-        print("Filesystem created on {0}.".format(self.part))
+        logging.debug(_("Created filesystem on {0}.").format(self.part))
 
         dispatch.account_partition_added(None, self.drive, self.part)
         dispatch.drive_partitions[self.drive][self.part] = PartitionStatus.AVAILABLE

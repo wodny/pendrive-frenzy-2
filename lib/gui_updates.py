@@ -28,7 +28,6 @@ class DriveAdded(GUIUpdate):
     def handle(self, updater):
         updater.gui.pendrive_add(self.path, self.port)
 
-# TODO: UNTESTED
 class PartitionAdded(GUIUpdate):
     def __init__(self, path, parent):
         self.path = path
