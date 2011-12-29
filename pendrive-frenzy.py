@@ -44,6 +44,7 @@ def main():
     qupdates = multiprocessing.Queue()
     qwriters = multiprocessing.Queue()
     qquits = multiprocessing.Queue()
+    quiting = multiprocessing.Event()
 
     writers = dict()
 
@@ -79,7 +80,7 @@ def main():
         gui_launcher.start()
 
         # Spawn Dispatch/Logic
-        d = Dispatch(qevents, qupdates, qwriters)
+        d = Dispatch(quiting, qevents, qupdates, qwriters)
         d.start()
 
         if len(sys.argv) >= 2:
@@ -89,10 +90,9 @@ def main():
         dws = DataWriterSpawner(qwriters, writers, qevents)
         dws.start()
 
-        # Join to Dispatch/Logic
-        d.join()
+        # Wait until a module signals the application should quit
+        quiting.wait()
     except KeyboardInterrupt:
-        # TODO: don't depend on GUI
         qupdates.put(Quit())
     logging.info(_("Quiting... ^C will force termination."))
     logging.info(_("Terminating DBus handler..."))
@@ -119,6 +119,8 @@ def main():
         writers[writer].join()
 
     logging.info(_("Waiting for logic..."))
+    qevents.put(None)
+    d.join()
     qevents.close()
     qevents.join_thread()
     d.join()

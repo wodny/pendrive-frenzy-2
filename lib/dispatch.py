@@ -31,10 +31,11 @@ import tools
 import logging
 
 class Dispatch(Process):
-    def __init__(self, events_out, updates_in, writers_in):
+    def __init__(self, quiting, events_out, updates_in, writers_in):
         Process.__init__(self)
         self.name = "Dispatch"
         self.work = True
+        self.quiting = quiting
         self.events_out = events_out
         self.updates_in = updates_in
         self.writers_in = writers_in
@@ -198,9 +199,10 @@ class Dispatch(Process):
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)
         logging.debug(_("Entering dispatch loop..."))
-        while self.work:
-            order = self.events_out.get()
+        order = self.events_out.get()
+        while order is not None:
             order.handle(self)
+            order = self.events_out.get()
 
         logging.debug(_("Exited dispatch loop."))
 

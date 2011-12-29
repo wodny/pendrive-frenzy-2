@@ -24,7 +24,7 @@ class GUIEvent:
 class Quit(GUIEvent):
     def handle(self, dispatch):
         logging.info(_("Got GUI quit event."))
-        dispatch.work = False
+        dispatch.quiting.set()
 
 class WritingChanged(GUIEvent):
     def __init__(self, writing):
