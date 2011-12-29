@@ -5,3 +5,4 @@ syntax: glob
 *.mo
 configs
 pendrive-frenzy.log
+README.html
