@@ -17,6 +17,10 @@
 
 
 
-
 def partnumber(parent, part):
+    """Return integer partition number
+    
+    >>> partnumber("/org/freedesktop/UDisks/devices/sdc", "/org/freedesktop/UDisks/devices/sdc2")
+    2
+    """
     return int(part[len(parent):])

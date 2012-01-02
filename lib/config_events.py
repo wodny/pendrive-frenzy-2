@@ -19,7 +19,7 @@
 
 
 import ConfigParser
-from lib.config import Config, ConfigException
+from config import Config, ConfigException
 import gui_updates
 import logging
 
