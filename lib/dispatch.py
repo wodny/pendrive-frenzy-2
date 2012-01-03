@@ -20,9 +20,7 @@
 
 import signal
 from multiprocessing import Process
-from threading import Thread
 
-from dbus_handler_launcher import DBusHandlerLauncher
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 import gui_updates

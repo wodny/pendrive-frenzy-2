@@ -19,7 +19,6 @@
 
 
 import subprocess
-import time
 
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus

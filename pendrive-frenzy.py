@@ -28,7 +28,6 @@ locale.bindtextdomain("pendrive-frenzy", "locale")
 import multiprocessing
 import threading
 
-import sys
 import logging
 import optparse
 

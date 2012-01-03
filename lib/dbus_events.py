@@ -17,13 +17,10 @@
 
 
 import gui_updates
-from datawriter_removal import DataWriterRemoval
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
-from dbus_tools import DBusTools
 from datawriter_requests import PartitionWriterRequest, MBRWriterRequest
 import tools
-import logging
 
 
 class DBusEvent:
