@@ -60,7 +60,10 @@ class PartitionAdded(DBusEvent):
             return
 
         complete = dispatch.account_partition_added(
-            (DriveStatus.DRIVE_NEW, DriveStatus.DRIVE_HASPT),
+            (
+                DriveStatus.DRIVE_NEW,
+                DriveStatus.DRIVE_HASPT,
+            ),
             self.parent,
             self.part
         )

@@ -88,7 +88,7 @@ class Dispatch(Process):
                        )
 
             if len(awaited):
-                return (DriveStatus.DRIVE_INPROGRESS,
+                return (DriveStatus.DRIVE_HASPT,
                         awaited,
                         available,
                         in_progress,
