@@ -145,8 +145,8 @@ def main(configfilename):
 
 
 def init_logging(options):
-    logformat = "%(asctime)s %(levelname)s" \
-                "%(processName)s %(threadName)s" \
+    logformat = "%(asctime)s %(levelname)s " \
+                "%(processName)s %(threadName)s " \
                 "%(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
 

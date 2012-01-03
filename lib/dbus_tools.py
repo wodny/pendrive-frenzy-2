@@ -154,7 +154,7 @@ class DBusTools:
                 return
             except dbus.DBusException, e:
                 logging.debug(
-                    _("Sleeping after DBusException"
+                    _("Sleeping after DBusException "
                       "during unmounting: {0}...").format(e)
                 )
                 time.sleep(delay)
