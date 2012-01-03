@@ -53,7 +53,6 @@ class MBRWriter:
         )
 
         try:
-            device = self.tools.get_device(self.drive)
             self.tools.create_mbr(self.drive)
 
         except dbus.DBusException:

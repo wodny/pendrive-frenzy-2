@@ -146,9 +146,9 @@ def main(configfilename):
 
 
 def init_logging(options):
-    format = "%(asctime)s %(levelname)s" \
-             "%(processName)s %(threadName)s" \
-             "%(message)s"
+    logformat = "%(asctime)s %(levelname)s" \
+                "%(processName)s %(threadName)s" \
+                "%(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
 
     numeric_level = getattr(logging, options.loglevel.upper(), None)
@@ -157,13 +157,13 @@ def init_logging(options):
 
     logging.basicConfig(
         level=numeric_level,
-        format=format,
+        format=logformat,
         datefmt=datefmt
     )
 
     if options.enablelogfile:
         fhandler = logging.FileHandler(options.logfile)
-        fhandler.setFormatter(logging.Formatter(format, datefmt))
+        fhandler.setFormatter(logging.Formatter(logformat, datefmt))
 
         rootlogger = logging.getLogger()
         rootlogger.addHandler(fhandler)

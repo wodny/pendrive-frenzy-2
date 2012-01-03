@@ -31,7 +31,6 @@ class Config:
 
         self.parser = ConfigParser.SafeConfigParser()
         self.parser.read(path)
-        sections = self.parser.sections()
 
         # Validation
         generaloptions = (

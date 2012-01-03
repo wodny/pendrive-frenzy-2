@@ -43,20 +43,20 @@ class PendriveStore:
         self.store = gtk.ListStore(str, str, str, int, str)
 
     def find(self, path):
-        iter = self.store.get_iter_first()
-        while iter:
-            if self.store.get(iter, 0)[0] == path:
-                return iter
-            iter = self.store.iter_next(iter)
+        i = self.store.get_iter_first()
+        while i:
+            if self.store.get(i, 0)[0] == path:
+                return i
+            i = self.store.iter_next(i)
 
-    def get_status(self, iter):
+    def get_status(self, i):
         return self.store.get(
-            iter,
+            i,
             PendriveStore.COLUMN_STATUSCODE,
             PendriveStore.COLUMN_STATUSTEXT
         )
 
-    def set_status(self, iter, code, text):
+    def set_status(self, i, code, text):
         try:
             color = PendriveStore.code_to_color[code]
         except KeyError:
@@ -66,7 +66,7 @@ class PendriveStore:
                 else PendriveStore.COLOR_NEW
 
         self.store.set(
-            iter,
+            i,
             PendriveStore.COLUMN_STATUSCODE, code,
             PendriveStore.COLUMN_STATUSTEXT, text,
             PendriveStore.COLUMN_COLOR, color

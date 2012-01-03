@@ -113,10 +113,6 @@ class GUI:
         self.updates_out.join_thread()
         logging.debug(_("GUI end."))
 
-    @staticmethod
-    def instance():
-        return GUI.__single if GUI.__single else GUI()
-
     def on_main_window_destroy(self, widget, data=None):
         gtk.main_quit()
 

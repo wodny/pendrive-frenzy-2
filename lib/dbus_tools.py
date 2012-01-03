@@ -247,7 +247,6 @@ class DBusTools:
         return newspecs
 
     def create_partition(self, drive, partspec):
-        chunk_size = self.get_chunk_size(drive)
         start = partspec["start"]
         size = partspec["size"]
         flags = ["boot"] if partspec["boot"] else []
