@@ -16,15 +16,15 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-
 import ConfigParser
 from config import Config, ConfigException
 import gui_updates
 import logging
 
+
 class ConfigEvent:
     pass
+
 
 class ReadConfig(ConfigEvent):
     def __init__(self, path):
@@ -32,14 +32,24 @@ class ReadConfig(ConfigEvent):
 
     def handle(self, dispatch):
         try:
-            logging.info(_("Loading configuration from file {0}...".format(self.path)))
+            logging.info(
+                _("Loading configuration from file {0}...").format(
+                    self.path
+                )
+            )
             config = Config(self.path)
             logging.info(_("Configuration loaded."))
             dispatch.config = config
             description = config.description
-            dispatch.updates_in.put(gui_updates.StatusBarUpdate(_("Configuration loaded.")))
-            dispatch.updates_in.put(gui_updates.InfoBarUpdate(description))
+            dispatch.updates_in.put(
+                gui_updates.StatusBarUpdate(_("Configuration loaded."))
+            )
+            dispatch.updates_in.put(
+                gui_updates.InfoBarUpdate(description)
+            )
         except (ConfigParser.Error, ValueError, ConfigException) as e:
             logging.error(_("Configuration parsing error: {0}".format(e)))
-            dispatch.updates_in.put(gui_updates.StatusBarUpdate(_("Configuration parsing error.")))
+            dispatch.updates_in.put(
+                gui_updates.StatusBarUpdate(_("Configuration parsing error."))
+            )
             dispatch.updates_in.put(gui_updates.InfoBarUpdate(""))

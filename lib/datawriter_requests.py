@@ -15,8 +15,10 @@
 #    You should have received a copy of the GNU General Public License
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
+
 from datawriter_launcher import MBRWriterLauncher, PartitionWriterLauncher
 import logging
+
 
 class DataWriterRequest:
     pass
@@ -29,14 +31,27 @@ class PartitionWriterRequest(DataWriterRequest):
         self.partspec = partspec
 
     def handle(self, writers, events_in):
-        logging.debug(_("Requested PartitionDataWriter for {0}.").format(self.part))
+        logging.debug(
+            _("Requested PartitionDataWriter for {0}.").format(
+                self.part
+            )
+        )
         if self.part in writers:
-            logging.error(_("Already have PartitionDataWriter for {0}!").format(self.part))
+            logging.error(
+                _("Already have PartitionDataWriter for {0}!").format(
+                    self.part
+                )
+            )
             return
-        logging.debug(_("Spawning PartitionDataWriter for {0}...").format(self.part))
+        logging.debug(
+            _("Spawning PartitionDataWriter for {0}...").format(
+                self.part
+            )
+        )
         l = PartitionWriterLauncher(events_in, self)
         writers[self.part] = l
         l.start()
+
 
 class MBRWriterRequest(DataWriterRequest):
     def __init__(self, drive, config):
@@ -47,10 +62,13 @@ class MBRWriterRequest(DataWriterRequest):
     def handle(self, writers, events_in):
         logging.debug(_("Requested MBRWriter for {0}.").format(self.drive))
         if self.drive in writers:
-            logging.error(_("Already have MBRWriter for {0}!").format(self.drive))
+            logging.error(
+                _("Already have MBRWriter for {0}!").format(
+                    self.drive
+                )
+            )
             return
         logging.debug(_("Spawning MBRWriter for {0}...").format(self.drive))
         l = MBRWriterLauncher(events_in, self)
         writers[self.drive] = l
         l.start()
-

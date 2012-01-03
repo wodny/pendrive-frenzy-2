@@ -16,14 +16,14 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-
 import ConfigParser
 import os.path
 import logging
 
+
 class ConfigException(Exception):
     pass
+
 
 class Config:
     def __init__(self, path):
@@ -32,9 +32,16 @@ class Config:
         self.parser = ConfigParser.SafeConfigParser()
         self.parser.read(path)
         sections = self.parser.sections()
-        
+
         # Validation
-        for i in ("mode", "description", "copycommand", "copycommand_params", "postscript"):
+        generaloptions = (
+            "mode",
+            "description",
+            "copycommand",
+            "copycommand_params",
+            "postscript"
+        )
+        for i in generaloptions:
             value = self.parser.get("general", i)
             self.__dict__[i] = value
 
@@ -43,7 +50,11 @@ class Config:
         if self.mode not in ("copy-only", "create-mbr"):
             raise ConfigException("Invalid mode")
 
-        self.partitions = [ int(part) for part in self.parser.get("general", "partitions").split(',') ]
+        self.partitions = [
+            int(part)
+            for part
+            in self.parser.get("general", "partitions").split(',')
+        ]
         self.partitions.sort()
 
         self.partspecs = dict()

@@ -16,10 +16,10 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 from multiprocessing import Process
 import signal
 from datawriter_events import DataWriterDone
+
 
 class DataWriterLauncher(Process):
     def __init__(self, events_in, request):
@@ -60,4 +60,3 @@ class PartitionWriterLauncher(DataWriterLauncher):
         w = PartitionWriter(self.events_in, self.request)
         writer_event = w.run()
         self.postrun(writer_event, DataWriterDone(self.request.part))
-

@@ -21,6 +21,7 @@ from multiprocessing import Process
 import signal
 import logging
 
+
 class DBusHandlerQuiter(Thread):
     def __init__(self, loop, quits_out):
         Thread.__init__(self)
@@ -44,7 +45,7 @@ class DBusHandlerLauncher(Process):
         self.events_in = events_in
         self.quits_out = quits_out
         self.name = "DBusHandlerLauncher"
-    
+
     def run(self):
         from dbus_handler import DBusHandler
         import gobject

@@ -18,7 +18,9 @@ print("; Uncomment the chosen mode")
 print(";mode = copy-only")
 print(";mode = create-mbr")
 
-parts = ','.join([ str(lib.tools.partnumber(parentpath, child)) for child in children ])
+parts = ','.join(
+    [str(lib.tools.partnumber(parentpath, child)) for child in children]
+)
 print("partitions = {0}".format(parts))
 print("description = An example")
 print("copycommand =")

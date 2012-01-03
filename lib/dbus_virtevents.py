@@ -16,10 +16,9 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-
-# Because currently UDisks' DeviceJobChanged is not very useful, this 
+# Because currently UDisks' DeviceJobChanged is not very useful, this
 # wrapper is used.
+
 
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
@@ -27,8 +26,10 @@ import tools
 from datawriter_requests import PartitionWriterRequest
 import logging
 
+
 class DBusVirtEvent:
     pass
+
 
 class MBRCreated(DBusVirtEvent):
     def __init__(self, drive):
@@ -37,7 +38,11 @@ class MBRCreated(DBusVirtEvent):
     def handle(self, dispatch):
         logging.debug(_("Created MBR on {0}.").format(self.drive))
         dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
-        dispatch.update_status(self.drive, "New MBR for {0}.".format(self.drive))
+        dispatch.update_status(
+            self.drive,
+            "New MBR for {0}.".format(self.drive)
+        )
+
 
 class PartitionsCreated(DBusVirtEvent):
     def __init__(self, drive):
@@ -46,7 +51,11 @@ class PartitionsCreated(DBusVirtEvent):
     def handle(self, dispatch):
         logging.debug(_("Created partitions on {0}.").format(self.drive))
         dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_HASPT
-        dispatch.update_status(self.drive, _("Created partitions on {0}.").format(self.drive))
+        dispatch.update_status(
+            self.drive,
+            _("Created partitions on {0}.").format(self.drive)
+        )
+
 
 class FSCreated(DBusVirtEvent):
     def __init__(self, drive, part):
@@ -57,8 +66,21 @@ class FSCreated(DBusVirtEvent):
         logging.debug(_("Created filesystem on {0}.").format(self.part))
 
         dispatch.account_partition_added(None, self.drive, self.part)
-        dispatch.drive_partitions[self.drive][self.part] = PartitionStatus.AVAILABLE
-        dispatch.update_status(self.drive, "New partition {0}.".format(self.part))
+        dispatch.drive_partitions[self.drive][self.part] = \
+            PartitionStatus.AVAILABLE
+        dispatch.update_status(
+            self.drive,
+            "New partition {0}.".format(self.part)
+        )
 
-        partspec = dispatch.config.partspecs[tools.partnumber(self.drive, self.part)]
-        dispatch.writers_in.put(PartitionWriterRequest(self.drive, self.part, partspec))
+        partspec = dispatch.config.partspecs[
+            tools.partnumber(self.drive, self.part)
+        ]
+
+        dispatch.writers_in.put(
+            PartitionWriterRequest(
+                self.drive,
+                self.part,
+                partspec
+            )
+        )

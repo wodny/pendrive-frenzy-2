@@ -15,16 +15,32 @@
 #    You should have received a copy of the GNU General Public License
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
+
 import logging
+
 
 class DataWriterRemoval:
     def __init__(self, device):
         self.device = device
 
     def handle(self, writers, events_in):
-        logging.debug(_("DataWriter removal request ({0})").format(self.device))
+        logging.debug(
+            _("DataWriter removal request ({0})").format(
+                self.device
+            )
+        )
+
         if self.device not in writers:
-            logging.error(_("DataWriter for {0} not found!").format(self.device))
+            logging.error(
+                _("DataWriter for {0} not found!").format(
+                    self.device
+                )
+            )
             return
+
         del writers[self.device]
-        logging.debug(_("Removed DataWriter for {0}.").format(self.device))
+        logging.debug(
+            _("Removed DataWriter for {0}.").format(
+                self.device
+            )
+        )

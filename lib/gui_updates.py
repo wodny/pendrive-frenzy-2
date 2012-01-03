@@ -16,9 +16,9 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 class GUIUpdate:
     pass
+
 
 class DriveAdded(GUIUpdate):
     def __init__(self, path, port):
@@ -28,6 +28,7 @@ class DriveAdded(GUIUpdate):
     def handle(self, updater):
         updater.gui.pendrive_add(self.path, self.port)
 
+
 class PartitionAdded(GUIUpdate):
     def __init__(self, path, parent):
         self.path = path
@@ -36,12 +37,14 @@ class PartitionAdded(GUIUpdate):
     def handle(self, updater):
         updater.gui.partition_add(self.path, self.parent)
 
+
 class DeviceRemoved(GUIUpdate):
     def __init__(self, path):
         self.path = path
 
     def handle(self, updater):
         updater.gui.pendrive_remove(self.path)
+
 
 class StatusUpdate(GUIUpdate):
     def __init__(self, pendrive, status_code, status_text):
@@ -50,7 +53,12 @@ class StatusUpdate(GUIUpdate):
         self.status_text = status_text
 
     def handle(self, updater):
-        updater.gui.status_update(self.pendrive, self.status_code, self.status_text)
+        updater.gui.status_update(
+            self.pendrive,
+            self.status_code,
+            self.status_text
+        )
+
 
 class InfoBarUpdate(GUIUpdate):
     def __init__(self, info):
@@ -59,12 +67,14 @@ class InfoBarUpdate(GUIUpdate):
     def handle(self, updater):
         updater.gui.infobar_update(self.info)
 
+
 class StatusBarUpdate(GUIUpdate):
     def __init__(self, status):
         self.status = status
 
     def handle(self, updater):
         updater.gui.statusbar_update(self.status)
+
 
 class Quit(GUIUpdate):
     def handle(self, updater):

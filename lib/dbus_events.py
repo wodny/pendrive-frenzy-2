@@ -16,7 +16,6 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 import gui_updates
 from datawriter_removal import DataWriterRemoval
 from drive_statuses import DriveStatus
@@ -26,8 +25,10 @@ from datawriter_requests import PartitionWriterRequest, MBRWriterRequest
 import tools
 import logging
 
+
 class DBusEvent:
     pass
+
 
 class DriveAdded(DBusEvent):
     def __init__(self, drive, port):
@@ -38,13 +39,18 @@ class DriveAdded(DBusEvent):
         added = dispatch.account_drive_added(self.drive)
         if added:
             if dispatch.config.mode == "create-mbr":
-                dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_WAITFORPT
-                dispatch.writers_in.put(MBRWriterRequest(self.drive, dispatch.config))
+                dispatch.drive_statuses[self.drive] = \
+                    DriveStatus.DRIVE_WAITFORPT
+                dispatch.writers_in.put(
+                    MBRWriterRequest(
+                        self.drive,
+                        dispatch.config
+                    )
+                )
             else:
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
         dispatch.updates_in.put(gui_updates.DriveAdded(self.drive, self.port))
         dispatch.update_status(self.drive, "New drive {0}.".format(self.drive))
-
 
 
 class PartitionAdded(DBusEvent):
@@ -64,12 +70,23 @@ class PartitionAdded(DBusEvent):
 
         if complete:
             available = \
-                dispatch.get_partitions_by_status(self.parent, PartitionStatus.AVAILABLE)
+                dispatch.get_partitions_by_status(
+                    self.parent,
+                    PartitionStatus.AVAILABLE
+                )
             for p in available:
-                dispatch.drive_partitions[self.parent][p] = PartitionStatus.IN_PROGRESS
-                partspec = dispatch.config.partspecs[tools.partnumber(self.parent, p)]
-                dispatch.writers_in.put(PartitionWriterRequest(self.parent, p, partspec))
-        dispatch.update_status(self.parent, "New partition {0}.".format(self.part))
+                dispatch.drive_partitions[self.parent][p] = \
+                    PartitionStatus.IN_PROGRESS
+                partspec = \
+                    dispatch.config.partspecs[tools.partnumber(self.parent, p)]
+                dispatch.writers_in.put(
+                    PartitionWriterRequest(self.parent, p, partspec)
+                )
+
+        dispatch.update_status(
+            self.parent,
+            "New partition {0}.".format(self.part)
+        )
 
 
 class DeviceRemoved(DBusEvent):

@@ -22,12 +22,13 @@ from dbus_events import *
 from dbus_tools import DBusTools
 import logging
 
+
 class DBusHandler:
     def __init__(self, events_in):
         self.events_in = events_in
 
         DBusGMainLoop(set_as_default=True)
-    
+
         self.systembus = dbus.SystemBus()
         self.systembus.add_signal_receiver(self.handler,
                                      dbus_interface="org.freedesktop.UDisks",
@@ -38,7 +39,6 @@ class DBusHandler:
                                      member_keyword="member",
                                      path_keyword="path"
                                     )
-
 
         # Assure the UDisks service runs
         self.tools = DBusTools()
@@ -51,7 +51,7 @@ class DBusHandler:
             path = args[0]
         else:
             return
-        
+
         if member == "DeviceAdded" and \
            self.tools.is_drive(path) and \
            self.tools.get_conn_interface(path) == "usb":
@@ -61,7 +61,12 @@ class DBusHandler:
             self.events_in.put(DriveAdded(path, port))
         if member == "DeviceAdded" and self.tools.is_partition(path):
             logging.debug(_("New partition {0}.").format(path))
-            self.events_in.put(PartitionAdded(self.tools.get_parent(path), path))
+            self.events_in.put(
+                PartitionAdded(
+                    self.tools.get_parent(path),
+                    path
+                )
+            )
         if member == "DeviceRemoved":
             logging.debug(_("Removed device {0}.").format(path))
             self.events_in.put(DeviceRemoved(path))

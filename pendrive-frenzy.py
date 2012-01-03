@@ -63,19 +63,18 @@ def main(configfilename):
     #  |                                               \|/       |#|  |
     #  |           main     |#|   main     |#|          '        |#|  |
     #  |      .-- thread -->|#|  thread -->|#|--> DBusHandler -->|#|--'
-    #  |      |   (Quit)    |#|  (Quit)    |#|                   |#| 
+    #  |      |   (Quit)    |#|  (Quit)    |#|                   |#|
     #  |     \|/            |#|                                  |#|
     #  |      '             |#|                                  |#|
     #  '-> Dispatch/Logic ->|#|------------> GUI --------------->|#|
-    #             |         |#|                                  |#| 
-    #             |    |#|                                       |#| 
-    #             '--->|#|--------------> DataWriterSpawner ---->|#| 
-    #       main ----->|#|                                       |#| 
-    #      thread      |#|                                    
+    #             |         |#|                                  |#|
+    #             |    |#|                                       |#|
+    #             '--->|#|--------------> DataWriterSpawner ---->|#|
+    #       main ----->|#|                                       |#|
+    #      thread      |#|
     #      (Quit)                                              events
     #                writers
-    #                         
-
+    #
 
     try:
         # Spawn DBus events handler
@@ -91,7 +90,7 @@ def main(configfilename):
         d.start()
 
         qevents.put(ReadConfig(configfilename))
-        
+
         # Spawn writers on request
         dws = DataWriterSpawner(qwriters, writers, qevents)
         dws.start()
@@ -135,7 +134,11 @@ def main(configfilename):
     # http://bugs.python.org/issue9207
     # semi-fix?
     remaining_threads = threading.enumerate()[1:]
-    logging.info(_("Waiting for {0} remaining thread(s)...").format(len(remaining_threads)))
+    logging.info(
+        _("Waiting for {0} remaining thread(s)...").format(
+            len(remaining_threads)
+        )
+    )
     for thread in remaining_threads:
         thread.join()
 
@@ -143,8 +146,10 @@ def main(configfilename):
 
 
 def init_logging(options):
-    format="%(asctime)s %(levelname)s %(processName)s %(threadName)s %(message)s"
-    datefmt="%Y-%m-%d %H:%M:%S"
+    format = "%(asctime)s %(levelname)s" \
+             "%(processName)s %(threadName)s" \
+             "%(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
 
     numeric_level = getattr(logging, options.loglevel.upper(), None)
     if not isinstance(numeric_level, int):

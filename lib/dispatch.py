@@ -30,6 +30,7 @@ import gui_updates
 import tools
 import logging
 
+
 class Dispatch(Process):
     def __init__(self, quiting, events_out, updates_in, writers_in):
         Process.__init__(self)
@@ -55,15 +56,30 @@ class Dispatch(Process):
         ]
 
     def parts_to_numbers(self, parent, parts):
-        parts = [ str(tools.partnumber(parent, part)) for part in parts ]
-        return ",".join( parts ) if len(parts) else "-"
+        parts = [str(tools.partnumber(parent, part)) for part in parts]
+        return ",".join(parts) if len(parts) else "-"
 
     def __check_partitions(self, parent):
-            awaited = self.get_partitions_by_status(parent, PartitionStatus.AWAITED)
-            available = self.get_partitions_by_status(parent, PartitionStatus.AVAILABLE)
-            in_progress = self.get_partitions_by_status(parent, PartitionStatus.IN_PROGRESS)
-            done = self.get_partitions_by_status(parent, PartitionStatus.DONE)
-            failed = self.get_partitions_by_status(parent, PartitionStatus.FAILED)
+            awaited = self.get_partitions_by_status(
+                parent,
+                PartitionStatus.AWAITED
+            )
+            available = self.get_partitions_by_status(
+                parent,
+                PartitionStatus.AVAILABLE
+            )
+            in_progress = self.get_partitions_by_status(
+                parent,
+                PartitionStatus.IN_PROGRESS
+            )
+            done = self.get_partitions_by_status(
+                parent,
+                PartitionStatus.DONE
+            )
+            failed = self.get_partitions_by_status(
+                parent,
+                PartitionStatus.FAILED
+            )
 
             if len(failed):
                 return (DriveStatus.DRIVE_PARTERROR,
@@ -82,8 +98,6 @@ class Dispatch(Process):
                         done,
                         failed
                        )
-
-
 
             if len(available):
                 return (DriveStatus.DRIVE_HASPT,
@@ -124,7 +138,6 @@ class Dispatch(Process):
                     failed
                    )
 
-
     def update_status(self, parent, status_text):
         if parent not in self.drive_statuses:
             return
@@ -145,7 +158,9 @@ class Dispatch(Process):
         if not (drive_status & DriveStatus.DRIVE_PT):
             failed_text = ""
             if failed:
-                failed_text = "; failed: {0}".format(self.parts_to_numbers(parent, failed))
+                failed_text = "; failed: {0}".format(
+                    self.parts_to_numbers(parent, failed)
+                )
             drive_text = "{0} → {1} → {2} → {3}{4}".format(
                 self.parts_to_numbers(parent, awaited),
                 self.parts_to_numbers(parent, available),
@@ -153,7 +168,6 @@ class Dispatch(Process):
                 self.parts_to_numbers(parent, done),
                 failed_text
             )
-
 
         self.updates_in.put(
             gui_updates.StatusUpdate(
@@ -167,13 +181,13 @@ class Dispatch(Process):
             self.updates_in.put(
                 gui_updates.StatusBarUpdate(status_text)
             )
- 
 
     def account_drive_added(self, drive):
         if self.writing and self.config:
             logging.debug(_("Accounting new drive: {0}").format(drive))
             self.drive_partitions[drive] = dict(
-                (   [
+                (
+                    [
                         "{0}{1}".format(drive, p),
                         PartitionStatus.AWAITED
                     ]
@@ -183,20 +197,28 @@ class Dispatch(Process):
             return True
         return False
 
-
     def account_partition_added(self, accepttype, parent, part):
         # TODO: Disk status ignored instead of partitions.
         if    self.writing \
           and self.config \
           and parent in self.drive_statuses \
-          and (accepttype is None or self.drive_statuses[parent] in accepttype):
-            logging.debug(_("New partition: {0}").format(part))
+          and (
+            accepttype is None or
+            self.drive_statuses[parent] in accepttype
+          ):
+            logging.debug(
+                _("New partition: {0}").format(part)
+            )
             if part not in self.drive_partitions[parent]:
                 self.drive_partitions[parent][part] = PartitionStatus.IGNORED
-                logging.debug(_("Ignored partition: {0}").format(part))
+                logging.debug(
+                    _("Ignored partition: {0}").format(part)
+                )
                 return
             if self.drive_partitions[parent][part] == PartitionStatus.IGNORED:
-                logging.debug(_("Previously ignored partition: {0}").format(part))
+                logging.debug(
+                    _("Previously ignored partition: {0}").format(part)
+                )
                 return
             self.drive_partitions[parent][part] = PartitionStatus.AVAILABLE
             awaited = \
@@ -204,8 +226,6 @@ class Dispatch(Process):
 
             return True if len(awaited) == 0 else False
         return False
-
-        
 
     def run(self):
         signal.signal(signal.SIGINT, signal.SIG_IGN)

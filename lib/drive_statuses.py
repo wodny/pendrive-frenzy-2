@@ -16,7 +16,6 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 class DriveStatus:
     DRIVE_NEW = 0x00
     DRIVE_HASPT = 0x01

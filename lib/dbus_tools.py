@@ -23,23 +23,24 @@ import math
 import time
 import logging
 
+
 class DBusTools:
     def __init__(self):
         self.systembus = dbus.SystemBus()
 
     def get_device(self, path):
         return self.systembus.get_object(
-                                         'org.freedesktop.UDisks',
-                                         path
-                                        )
+            'org.freedesktop.UDisks',
+            path
+        )
 
     def get_prop(self, device, propname):
         return device.Get(
-                          'org.freedesktop.UDisks.Device',
-                          propname,
-                          dbus_interface = 'org.freedesktop.DBus.Properties',
-                          timeout = 300
-                         )
+            'org.freedesktop.UDisks.Device',
+            propname,
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
+        )
 
     def get_drive_id(self, path):
         device = self.get_device(path)
@@ -48,49 +49,47 @@ class DBusTools:
         model = self.get_prop(device, "DriveModel")
         serial = self.get_prop(device, "DriveSerial")
         return "{0}/{1} {2}/{3}".format(iface, vendor, model, serial)
-    
+
     def get_partition_spec(self, path):
         device = self.get_device(path)
         start = int(device.Get(
             'org.freedesktop.UDisks.Device',
             "PartitionOffset",
-            dbus_interface = 'org.freedesktop.DBus.Properties',
-            timeout = 300
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
         ))
         size = int(device.Get(
             'org.freedesktop.UDisks.Device',
             "PartitionSize",
-            dbus_interface = 'org.freedesktop.DBus.Properties',
-            timeout = 300
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
         ))
         ptype = str(device.Get(
             'org.freedesktop.UDisks.Device',
             "PartitionType",
-            dbus_interface = 'org.freedesktop.DBus.Properties',
-            timeout = 300
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
         ))
         fstype = str(device.Get(
             'org.freedesktop.UDisks.Device',
             "IdType",
-            dbus_interface = 'org.freedesktop.DBus.Properties',
-            timeout = 300
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
         ))
         label = str(device.Get(
             'org.freedesktop.UDisks.Device',
             "IdLabel",
-            dbus_interface = 'org.freedesktop.DBus.Properties',
-            timeout = 300
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
         ))
         flags = device.Get(
             'org.freedesktop.UDisks.Device',
             "PartitionFlags",
-            dbus_interface = 'org.freedesktop.DBus.Properties',
-            timeout = 300
+            dbus_interface='org.freedesktop.DBus.Properties',
+            timeout=300
         )
         boot = "boot" in flags
         return (start, size, ptype, fstype, label, boot)
-
-        
 
     def is_drive(self, path):
         device = self.get_device(path)
@@ -120,7 +119,7 @@ class DBusTools:
         for path in udisks.EnumerateDevices():
             if self.get_device_filename(path) == devfile:
                 return path
-    
+
     def get_children(self, parentpath):
         udisks = self.get_udisks()
         children = []
@@ -135,34 +134,39 @@ class DBusTools:
         if self.get_prop(device, "DeviceIsMounted"):
             return self.get_prop(device, "DeviceMountPaths")[0]
         return device.FilesystemMount(
-                                      "", [],
-                                      dbus_interface = 'org.freedesktop.UDisks.Device',
-                                      timeout = 300
-                                     )
+            "", [],
+            dbus_interface='org.freedesktop.UDisks.Device',
+            timeout=300
+        )
 
     def unmount(self, path):
         device = self.get_device(path)
         return device.FilesystemUnmount(
-                                        [],
-                                        dbus_interface = 'org.freedesktop.UDisks.Device',
-                                        timeout = 300
-                                       )
+            [],
+            dbus_interface='org.freedesktop.UDisks.Device',
+            timeout=300
+        )
 
-    def unmount_retry(self, path, tries = 5, delay = 3):
+    def unmount_retry(self, path, tries=5, delay=3):
         for i in range(0, tries):
             try:
                 self.unmount(path)
                 return
             except dbus.DBusException, e:
-                logging.debug(_("Sleeping after DBusException during unmounting: {0}...").format(e))
+                logging.debug(
+                    _("Sleeping after DBusException"
+                      "during unmounting: {0}...").format(e)
+                )
                 time.sleep(delay)
 
         raise dbus.DBusException("Unmounting of {0} failed".format(path))
 
-
     def create_mbr(self, path):
         device = self.get_device(path)
-        device.PartitionTableCreate("mbr", [], dbus_interface = 'org.freedesktop.UDisks.Device')
+        device.PartitionTableCreate(
+            "mbr", [],
+            dbus_interface='org.freedesktop.UDisks.Device'
+        )
 
     def get_conn_interface(self, path):
         device = self.get_device(path)
@@ -177,11 +181,11 @@ class DBusTools:
 
     def ceil_to_chunk(self, size, chunksize):
         return int(math.ceil(1.0 * size / chunksize) * chunksize)
-   
+
     def get_geometry(self, path):
         devfile = self.get_device_filename(path)
         pdevice = parted.device.Device(devfile)
-        return pdevice.hardwareGeometry + ( pdevice.physicalSectorSize, )
+        return pdevice.hardwareGeometry + (pdevice.physicalSectorSize,)
 
     def get_chunk_size(self, path):
         (cylinders, heads, sectors, sectorsize) = self.get_geometry(path)
@@ -195,7 +199,7 @@ class DBusTools:
         chunksize = self.get_chunk_size(drive)
         newspecs = copy.deepcopy(partspecs)
 
-        devsize = self.get_device_size(drive) 
+        devsize = self.get_device_size(drive)
         maxend = self.floor_to_chunk(devsize - 10 * chunksize, chunksize)
 
         (cylinders, heads, sectors, sectorsize) = self.get_geometry(drive)
@@ -251,21 +255,30 @@ class DBusTools:
         device = self.get_device(drive)
 
         logging.debug(_("Creating partition..."))
-        logging.debug(_("Bytes  : {0} -- {1}  ({2})").format(start, (start + size - 1), size))
-        logging.debug(_("Sectors: {0} -- {1}  ({2})").format(start / 512, (start + size - 1) / 512, size / 512))
+        logging.debug(
+            _("Bytes  : {0} -- {1}  ({2})").format(
+                start, (start + size - 1), size
+            )
+        )
+        logging.debug(
+            _("Sectors: {0} -- {1}  ({2})").format(
+                start / 512, (start + size - 1) / 512, size / 512
+            )
+        )
 
         partition = device.PartitionCreate(
-                                           start,
-                                           size,
-                                           partspec["type"],
-                                           "",
-                                           flags,
-                                           [],
-                                           "",
-                                           [],
-                                           dbus_interface = 'org.freedesktop.UDisks.Device',
-                                           timeout = 300
-                                          )
+            start,
+            size,
+            partspec["type"],
+            "",
+            flags,
+            [],
+            "",
+            [],
+            dbus_interface='org.freedesktop.UDisks.Device',
+            timeout=300
+        )
+
         return partition
 
     def create_fs(self, device, partspec):
@@ -274,18 +287,21 @@ class DBusTools:
 
         logging.debug(_("Creating filesystem for {0}...").format(device))
 
-        if partspec["fstype"] in ( "squashfs", "image" ):
+        if partspec["fstype"] in ("squashfs", "image"):
             logging.debug(_("Dummy filesystem for {0}.").format(device))
             return True
 
-        options = ["label={0}".format(partspec["label"])] if len(partspec["label"]) else []
+        options = \
+            ["label={0}".format(partspec["label"])] \
+            if len(partspec["label"]) \
+            else []
         device = self.get_device(device)
 
         partition = device.FilesystemCreate(
-                                           partspec["fstype"],
-                                           options,
-                                           dbus_interface = 'org.freedesktop.UDisks.Device',
-                                           timeout = 300
-                                          )
+            partspec["fstype"],
+            options,
+            dbus_interface='org.freedesktop.UDisks.Device',
+            timeout=300
+        )
 
         return True

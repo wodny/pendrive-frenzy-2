@@ -16,9 +16,9 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 from threading import Thread
 import logging
+
 
 class DataWriterSpawner(Thread):
     def __init__(self, writers_out, writers, events_in):

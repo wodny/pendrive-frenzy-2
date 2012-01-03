@@ -18,13 +18,16 @@
 
 import logging
 
+
 class GUIEvent:
     pass
+
 
 class Quit(GUIEvent):
     def handle(self, dispatch):
         logging.info(_("Got GUI quit event."))
         dispatch.quiting.set()
+
 
 class WritingChanged(GUIEvent):
     def __init__(self, writing):

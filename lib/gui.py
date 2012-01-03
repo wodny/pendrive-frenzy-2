@@ -16,7 +16,6 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
 import pygtk
 pygtk.require('2.0')
 import gtk
@@ -46,13 +45,19 @@ class PendriveListWrapper:
         self.cell_name = gtk.CellRendererText()
         self.cell_port = gtk.CellRendererText()
         self.cell_status = gtk.CellRendererText()
-        self.column_name = gtk.TreeViewColumn(_("Device"), self.cell_name, text=0)
-        self.column_port = gtk.TreeViewColumn(_("Port"), self.cell_port, text=1)
-        self.column_status = gtk.TreeViewColumn(_("Partitions status"),
-                                                self.cell_status,
-                                                text=PendriveStore.COLUMN_STATUSTEXT,
-                                                background=PendriveStore.COLUMN_COLOR
-                                               )
+        self.column_name = gtk.TreeViewColumn(
+            _("Device"), self.cell_name, text=0
+        )
+        self.column_port = gtk.TreeViewColumn(
+            _("Port"), self.cell_port, text=1
+        )
+        self.column_status = gtk.TreeViewColumn(
+            _("Partitions status"),
+            self.cell_status,
+            text=PendriveStore.COLUMN_STATUSTEXT,
+            background=PendriveStore.COLUMN_COLOR
+        )
+
         self.pendrive_view.append_column(self.column_name)
         self.pendrive_view.append_column(self.column_port)
         self.pendrive_view.append_column(self.column_status)
@@ -83,7 +88,9 @@ class GUI:
         self.builder.add_from_file(sys.path[0] + "/lib/pendrive-frenzy.glade")
 
         self.window = self.builder.get_object("main_window")
-        self.pendrive_list = PendriveListWrapper( self.builder.get_object("pendrive_list") )
+        self.pendrive_list = PendriveListWrapper(
+            self.builder.get_object("pendrive_list")
+        )
         self.writing_enabled = self.builder.get_object("writing_enabled")
         self.infobar = self.builder.get_object("infobar")
         self.statusbar = self.builder.get_object("statusbar")
@@ -110,15 +117,16 @@ class GUI:
     def instance():
         return GUI.__single if GUI.__single else GUI()
 
-    def on_main_window_destroy(self, widget, data = None):
+    def on_main_window_destroy(self, widget, data=None):
         gtk.main_quit()
 
-    def on_select_source_dir_pressed(self, widget, data = None):
+    def on_select_source_dir_pressed(self, widget, data=None):
         chooser = gtk.FileChooserDialog(
-                                        action = gtk.FILE_CHOOSER_ACTION_OPEN,
-                                        buttons = (gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
-                                                   gtk.STOCK_OPEN, gtk.RESPONSE_OK)
-                                       )
+            action=gtk.FILE_CHOOSER_ACTION_OPEN,
+            buttons=(gtk.STOCK_CANCEL, gtk.RESPONSE_CANCEL,
+                     gtk.STOCK_OPEN,   gtk.RESPONSE_OK)
+        )
+
         chooser.set_default_response(gtk.RESPONSE_OK)
         response = chooser.run()
         if response == gtk.RESPONSE_OK:
@@ -127,7 +135,7 @@ class GUI:
             self.events_in.put(ReadConfig(source))
         chooser.destroy()
 
-    def on_writing_pressed(self, widget, data = None):
+    def on_writing_pressed(self, widget, data=None):
         active = self.writing_active()
         self.events_in.put(WritingChanged(active))
 
@@ -148,11 +156,17 @@ class GUI:
         self.statusbar.push(self.statusbar_contextid, status)
 
     def status_update(self, pendrive, status_code, status_text):
-        gobject.idle_add(self.__status_update_idle, pendrive, status_code, status_text)
+        gobject.idle_add(
+            self.__status_update_idle,
+            pendrive,
+            status_code,
+            status_text
+        )
 
     def __status_update_idle(self, pendrive, status_code, status_text):
         pendrive = self.pendrive_list.pendrive_store.find(pendrive)
-        if pendrive is None: return
+        if pendrive is None:
+            return
         self.pendrive_list.pendrive_store.set_status(
                                                      pendrive,
                                                      status_code,
@@ -170,7 +184,11 @@ class GUI:
 
     def __pendrive_add_idle(self, pendrive, port):
         self.pendrive_list.pendrive_store.store.append([
-            pendrive, port, _("New"), DriveStatus.DRIVE_NEW, PendriveStore.COLOR_NEW
+            pendrive,
+            port,
+            _("New"),
+            DriveStatus.DRIVE_NEW,
+            PendriveStore.COLOR_NEW
         ])
 
     def pendrive_remove(self, pendrive):
@@ -178,5 +196,6 @@ class GUI:
 
     def __pendrive_remove_idle(self, pendrive):
         pendrive_iter = self.pendrive_list.pendrive_store.find(pendrive)
-        if pendrive_iter is None: return
+        if pendrive_iter is None:
+            return
         self.pendrive_list.pendrive_store.store.remove(pendrive_iter)
