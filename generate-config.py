@@ -4,6 +4,7 @@ import lib.dbus_tools
 import lib.tools
 import sys
 
+
 if len(sys.argv) < 2:
     exit("Device filename is required (eg. /dev/sdd).")
 
