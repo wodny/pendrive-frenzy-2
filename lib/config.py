@@ -45,18 +45,20 @@ class Config:
 
         self.postscript = self.prefix_with_basedir(self.postscript)
 
-        if self.mode not in ("copy-only", "create-mbr"):
+        if self.mode not in ("copy-only", "create-mbr", "full-drive-image"):
             raise ConfigException("Invalid mode")
 
-        self.partitions = [
-            int(part)
-            for part
-            in self.parser.get("general", "partitions").split(',')
-        ]
+        partition_list = self.parser.get("general", "partitions")
+        if partition_list != "":
+            self.partitions = [
+                int(part)
+                for part
+                in partition_list.split(',')
+            ]
+        else:
+            self.partitions = []
         self.partitions.sort()
-
         self.partspecs = dict()
-
         for p in self.partitions:
             section = "partition_{0}".format(p)
             self.partspecs[p] = dict()

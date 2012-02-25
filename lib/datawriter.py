@@ -172,6 +172,27 @@ class MBRWriter:
 
         return PartitionsCreated(self.drive)
 
+class FullDriveWriter:
+    def __init__(self, events_in, request):
+        self.events_in = events_in
+        self.request = request
+
+        self.drive = request.drive
+        self.tools = DBusTools()
+
+    def run(self):
+        logging.info(_("FullDriveWriter here {0}...").format(self.drive))
+        self.events_in.put(
+            StatusUpdate(
+                self.drive,
+                None,
+                None,
+                None,
+                _("Doing something {0}...").format(self.drive)
+            )
+        )
+
+
 
 class PartitionWriter:
     def __init__(self, events_in, request):
