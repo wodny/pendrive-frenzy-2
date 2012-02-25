@@ -30,9 +30,11 @@ class PendriveStore:
         DriveStatus.DRIVE_NEW: COLOR_NEW,
         DriveStatus.DRIVE_HASPT: COLOR_INPROGRESS,
         DriveStatus.DRIVE_INPROGRESS: COLOR_INPROGRESS,
+        DriveStatus.DRIVE_INPROGRESS_DRV: COLOR_INPROGRESS,
         DriveStatus.DRIVE_WAITFORPT: COLOR_INPROGRESS,
         DriveStatus.DRIVE_PTERROR: COLOR_INPROGRESS,
         DriveStatus.DRIVE_DONE: COLOR_DONE,
+        DriveStatus.DRIVE_DONE_DRV: COLOR_DONE,
     }
 
     COLUMN_STATUSTEXT = 2

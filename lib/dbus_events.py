@@ -46,7 +46,7 @@ class DriveAdded(DBusEvent):
                 )
             elif dispatch.config.mode == "full-drive-image":
                 dispatch.drive_statuses[self.drive] = \
-                    DriveStatus.DRIVE_INPROGRESS
+                    DriveStatus.DRIVE_INPROGRESS_DRV
                 dispatch.writers_in.put(
                     FullDriveWriterRequest(
                         self.drive,

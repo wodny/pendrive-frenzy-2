@@ -57,6 +57,7 @@ class Config:
             ]
         else:
             self.partitions = []
+            self.fulldriveimage = self.get_partdata_spec(0)[0]
         self.partitions.sort()
         self.partspecs = dict()
         for p in self.partitions:

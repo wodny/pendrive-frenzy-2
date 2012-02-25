@@ -151,6 +151,13 @@ class Dispatch(Process):
             drive_text = "Failed creating MBR."
         if drive_status == DriveStatus.DRIVE_WAITFORPT:
             drive_text = "Waiting for MBR..."
+        if drive_status == DriveStatus.DRIVE_INPROGRESS_DRV:
+            drive_text = "Writing image..."
+        if drive_status == DriveStatus.DRIVE_DONE_DRV:
+            drive_text = "Done."
+        if drive_status == DriveStatus.DRIVE_ERROR_DRV:
+            drive_text = "Error."
+
 
         if not (drive_status & DriveStatus.DRIVE_PT):
             failed_text = ""
