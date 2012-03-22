@@ -19,6 +19,7 @@
 
 
 import subprocess
+import os.path
 
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
@@ -288,7 +289,7 @@ class PartitionWriter:
                     "--delete",
                     "--",
                     self.partspec["path"],
-                    mountpoint
+                    os.path.join(mountpoint, self.partspec["dest_prefix"])
                 ]
             if self.partspec["method"] == "copy-image":
                 cmd = [

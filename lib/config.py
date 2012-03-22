@@ -28,7 +28,9 @@ class Config:
     def __init__(self, path):
         self.path = path
 
-        self.parser = ConfigParser.SafeConfigParser()
+        self.parser = ConfigParser.SafeConfigParser(
+            {"dest_prefix": ""}
+        )
         self.parser.read(path)
 
         # Validation
@@ -74,6 +76,10 @@ class Config:
                 self.get_partdata_spec(p)
             self.partspecs[p]["postscript"] = self.prefix_with_basedir(
                 self.parser.get(section, "postscript")
+            )
+            self.partspecs[p]["dest_prefix"] = self.parser.get(
+                section,
+                "dest_prefix"
             )
 
     def prefix_with_basedir(self, path):
