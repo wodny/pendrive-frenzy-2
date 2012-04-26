@@ -44,6 +44,8 @@ class DBusHandler:
         self.tools = DBusTools()
         self.tools.get_device("/org/freedesktop/UDisks")
 
+        self.drives = dict()
+
     def handler(self, *args, **kwargs):
         member = kwargs['member']
 
@@ -56,9 +58,26 @@ class DBusHandler:
            self.tools.is_drive(path) and \
            self.tools.get_conn_interface(path) == "usb":
             driveid = self.tools.get_drive_id(path)
-            logging.info(_("New drive {0} {1}.").format(path, driveid))
             port = self.tools.get_port(path)
-            self.events_in.put(DriveAdded(path, port))
+            size = self.tools.get_device_size(path)
+            logging.info(_("New drive {0} {1} (size={2}).").format(path, driveid, size))
+            if size != 0:
+                self.events_in.put(DriveAdded(path, port))
+            self.drives[path] = size
+
+        if member == "DeviceChanged" and \
+           self.tools.is_drive(path) and \
+           self.tools.get_conn_interface(path) == "usb":
+            driveid = self.tools.get_drive_id(path)
+            port = self.tools.get_port(path)
+            size = self.tools.get_device_size(path)
+            logging.info(_("Drive {0} {1} changed (size={2}).").format(path, driveid, size))
+            if path in self.drives and self.drives[path] == 0 and size != 0:
+                self.events_in.put(DriveAdded(path, port))
+            if path in self.drives and size == 0:
+                self.events_in.put(DeviceRemoved(path))
+            self.drives[path] = size
+
         if member == "DeviceAdded" and self.tools.is_partition(path):
             logging.debug(_("New partition {0}.").format(path))
             self.events_in.put(
@@ -69,4 +88,8 @@ class DBusHandler:
             )
         if member == "DeviceRemoved":
             logging.debug(_("Removed device {0}.").format(path))
+            try:
+                del self.drives[path]
+            except KeyError:
+                pass
             self.events_in.put(DeviceRemoved(path))
