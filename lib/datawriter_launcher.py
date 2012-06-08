@@ -49,6 +49,16 @@ class MBRWriterLauncher(DataWriterLauncher):
         writer_event = w.run()
         self.postrun(writer_event, DataWriterDone(self.request.drive))
 
+class FullDriveWriterLauncher(DataWriterLauncher):
+    def __init__(self, events_in, request):
+        DataWriterLauncher.__init__(self, events_in, request)
+
+    def run(self):
+        self.prerun()
+        from datawriter import FullDriveWriter
+        w = FullDriveWriter(self.events_in, self.request)
+        writer_event = w.run()
+        self.postrun(writer_event, DataWriterDone(self.request.drive))
 
 class PartitionWriterLauncher(DataWriterLauncher):
     def __init__(self, events_in, request):

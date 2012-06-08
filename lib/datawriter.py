@@ -19,12 +19,13 @@
 
 
 import subprocess
+import os.path
 
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
 from datawriter_events import StatusUpdate
 from dbus_tools import DBusTools
-from dbus_virtevents import MBRCreated, PartitionsCreated, FSCreated
+from dbus_virtevents import MBRCreated, PartitionsCreated, FullDriveDone, FSCreated
 
 import dbus
 import logging
@@ -172,6 +173,55 @@ class MBRWriter:
 
         return PartitionsCreated(self.drive)
 
+class FullDriveWriter:
+    def __init__(self, events_in, request):
+        self.events_in = events_in
+        self.request = request
+
+        self.drive = request.drive
+        self.tools = DBusTools()
+
+    def run(self):
+        logging.info(_("FullDriveWriter starting {0}...").format(self.drive))
+        self.events_in.put(
+            StatusUpdate(
+                self.drive,
+                None,
+                None,
+                None,
+                _("About to write an image on {0}...").format(self.drive)
+            )
+        )
+
+        try:
+            cmd = [
+                "dd",
+                "bs=8M",
+                "conv=fsync",
+                "if={0}".format(self.request.config.fulldriveimage),
+                "of={0}".format(self.tools.get_device_filename(self.drive))
+            ]
+            logging.debug(_("Executing copy command {0}...").format(cmd))
+            output = subprocess.check_output(cmd, stderr=subprocess.STDOUT)
+            for line in output.split('\n'):
+                logging.debug(_("Command output: {0}").format(line))
+        except subprocess.CalledProcessError as e:
+            for line in e.output.split('\n'):
+                logging.error(_("Command output: {0}").format(line))
+            logging.error(_("Error executing copy command: {0}").format(e))
+            self.events_in.put(
+                StatusUpdate(
+                    self.drive,
+                    DriveStatus.DRIVE_ERROR_DRV,
+                    None,
+                    None,
+                    _("Error while writing image to {0}!").format(self.drive)
+                )
+            )
+            return
+
+        return FullDriveDone(self.drive)
+
 
 class PartitionWriter:
     def __init__(self, events_in, request):
@@ -239,7 +289,7 @@ class PartitionWriter:
                     "--delete",
                     "--",
                     self.partspec["path"],
-                    mountpoint
+                    os.path.join(mountpoint, self.partspec["dest_prefix"])
                 ]
             if self.partspec["method"] == "copy-image":
                 cmd = [

@@ -16,7 +16,7 @@
 #    along with pendrive-frenzy.  If not, see <http://www.gnu.org/licenses/>.
 
 
-from datawriter_launcher import MBRWriterLauncher, PartitionWriterLauncher
+from datawriter_launcher import MBRWriterLauncher, FullDriveWriterLauncher, PartitionWriterLauncher
 import logging
 
 
@@ -70,5 +70,25 @@ class MBRWriterRequest(DataWriterRequest):
             return
         logging.debug(_("Spawning MBRWriter for {0}...").format(self.drive))
         l = MBRWriterLauncher(events_in, self)
+        writers[self.drive] = l
+        l.start()
+
+class FullDriveWriterRequest(DataWriterRequest):
+    def __init__(self, drive, config):
+        self.drive = drive
+        self.config = config
+        self.partspecs = config.partspecs
+
+    def handle(self, writers, events_in):
+        logging.debug(_("Requested FullDriveWriter for {0}.").format(self.drive))
+        if self.drive in writers:
+            logging.error(
+                _("Already have FullDriveWriter for {0}!").format(
+                    self.drive
+                )
+            )
+            return
+        logging.debug(_("Spawning FullDriveWater for {0}...").format(self.drive))
+        l = FullDriveWriterLauncher(events_in, self)
         writers[self.drive] = l
         l.start()

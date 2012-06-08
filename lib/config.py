@@ -28,7 +28,9 @@ class Config:
     def __init__(self, path):
         self.path = path
 
-        self.parser = ConfigParser.SafeConfigParser()
+        self.parser = ConfigParser.SafeConfigParser(
+            {"dest_prefix": ""}
+        )
         self.parser.read(path)
 
         # Validation
@@ -45,18 +47,21 @@ class Config:
 
         self.postscript = self.prefix_with_basedir(self.postscript)
 
-        if self.mode not in ("copy-only", "create-mbr"):
+        if self.mode not in ("copy-only", "create-mbr", "full-drive-image"):
             raise ConfigException("Invalid mode")
 
-        self.partitions = [
-            int(part)
-            for part
-            in self.parser.get("general", "partitions").split(',')
-        ]
+        partition_list = self.parser.get("general", "partitions")
+        if partition_list != "":
+            self.partitions = [
+                int(part)
+                for part
+                in partition_list.split(',')
+            ]
+        else:
+            self.partitions = []
+            self.fulldriveimage = self.get_partdata_spec(0)[0]
         self.partitions.sort()
-
         self.partspecs = dict()
-
         for p in self.partitions:
             section = "partition_{0}".format(p)
             self.partspecs[p] = dict()
@@ -71,6 +76,10 @@ class Config:
                 self.get_partdata_spec(p)
             self.partspecs[p]["postscript"] = self.prefix_with_basedir(
                 self.parser.get(section, "postscript")
+            )
+            self.partspecs[p]["dest_prefix"] = self.parser.get(
+                section,
+                "dest_prefix"
             )
 
     def prefix_with_basedir(self, path):

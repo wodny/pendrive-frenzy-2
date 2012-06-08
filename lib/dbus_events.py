@@ -19,7 +19,7 @@
 import gui_updates
 from drive_statuses import DriveStatus
 from partition_statuses import PartitionStatus
-from datawriter_requests import PartitionWriterRequest, MBRWriterRequest
+from datawriter_requests import PartitionWriterRequest, MBRWriterRequest, FullDriveWriterRequest
 import tools
 
 
@@ -44,7 +44,16 @@ class DriveAdded(DBusEvent):
                         dispatch.config
                     )
                 )
-            else:
+            elif dispatch.config.mode == "full-drive-image":
+                dispatch.drive_statuses[self.drive] = \
+                    DriveStatus.DRIVE_INPROGRESS_DRV
+                dispatch.writers_in.put(
+                    FullDriveWriterRequest(
+                        self.drive,
+                        dispatch.config
+                    )
+                )
+            elif dispatch.config.mode == "copy-only":
                 dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_NEW
         dispatch.updates_in.put(gui_updates.DriveAdded(self.drive, self.port))
         dispatch.update_status(self.drive, "New drive {0}.".format(self.drive))
@@ -56,7 +65,7 @@ class PartitionAdded(DBusEvent):
         self.part = part
 
     def handle(self, dispatch):
-        if dispatch.config and dispatch.config.mode == "create-mbr":
+        if dispatch.config and dispatch.config.mode in ("create-mbr", "full-drive-image"):
             return
 
         complete = dispatch.account_partition_added(

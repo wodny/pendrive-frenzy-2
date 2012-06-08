@@ -56,6 +56,19 @@ class PartitionsCreated(DBusVirtEvent):
             _("Created partitions on {0}.").format(self.drive)
         )
 
+class FullDriveDone(DBusVirtEvent):
+    def __init__(self, drive):
+        self.drive = drive
+
+    def handle(self, dispatch):
+        logging.debug(_("Full drive image copy done for {0}.").format(self.drive))
+        dispatch.drive_statuses[self.drive] = DriveStatus.DRIVE_DONE_DRV
+        dispatch.update_status(
+            self.drive,
+            _("Full drive image copy done for {0}.").format(self.drive)
+        )
+
+
 
 class FSCreated(DBusVirtEvent):
     def __init__(self, drive, part):
