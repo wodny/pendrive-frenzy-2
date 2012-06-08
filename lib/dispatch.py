@@ -236,7 +236,12 @@ class Dispatch(Process):
         logging.debug(_("Entering dispatch loop..."))
         order = self.events_out.get()
         while order is not None:
-            order.handle(self)
+            logging.debug("Order: {0}".format(order))
+            try:
+                order.handle(self)
+            except Exception as e:
+                logging.error("Exception caught in dispatch loop.")
+                logging.error("Exception {0}: {1}".format(type(e), e))
             order = self.events_out.get()
 
         logging.debug(_("Exited dispatch loop."))
